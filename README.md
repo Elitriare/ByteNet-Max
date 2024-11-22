@@ -1,5 +1,3 @@
-# ByteNet-Max
-An upgraded version of ByteNet by ffrostfall that includes queries (RemoteFunctions), using buffers to send data with low memory, optimising experiences to be blazing fast!
 <div align="center"><h1><b>ByteNet Max</b></h1></div>
 <div align="center"><h2><b>An upgraded buffer-based networking system</b></h2></div>
 
