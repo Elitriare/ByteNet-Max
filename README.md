@@ -23,15 +23,15 @@ return ByteNetMax.defineNamespace("PlayerData", function()
     return {
        packets = {}, -- not necessary to include this table if there's no values in it.
        queries = {
-			GetCoins = ByteNetMax.defineQuery({
-				request = ByteNetMax.struct({
-					message = ByteNetMax.string
-				}),
-				response = ByteNetMax.struct({
-					coins = ByteNetMax.uint8
-				})
+		GetCoins = ByteNetMax.defineQuery({
+			request = ByteNetMax.struct({
+				message = ByteNetMax.string
+			}),
+			response = ByteNetMax.struct({
+				coins = ByteNetMax.uint8
 			})
-		},		
+		})
+	},		
     }
 end)
 ```
@@ -52,7 +52,7 @@ In a server script, you can receive the query and return the appropriate informa
 local QueryModule = require(path.to.QueryModule)
 
 QueryModule.queries.GetCoins.listen(function(data, player)	
-    print(data.message) -- prints "Can I please get the coins value?"
+	print(data.message) -- prints "Can I please get the coins value?"
 	return player.leaderstats.Coins.Value
 end)
 ```
