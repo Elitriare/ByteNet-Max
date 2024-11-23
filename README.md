@@ -61,6 +61,8 @@ It's that simple!
 
 Packets & Queries can co-exist under the same namespace, just make sure you define the packets and queries table in defineNamespace. If you don't require packets, you can leave it out and just define the queries table, and vice versa.
 
+<b>IMPORTANT:</b> You must require the ModuleScript you created on both the server and client! This is to initialise server side & client side dependencies for a secure network.
+
 <h3><b>Contact</b></h3> 
 
 Contact me on [Twitter](https://x.com/Elitriare) or Discord (username: elitriare), or just in this thread to report bugs or request features. I haven't fully tested this across different types of experiences, so your ***feedback*** is extremely useful!
