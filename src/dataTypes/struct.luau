@@ -1,6 +1,6 @@
 local RunService = game:GetService("RunService")
 
-local namespacesDependencies = require(script.Parent.Parent.namespaces.namespacesDependencies)
+local namespacesDependencies = require(script.Parent.Parent.namespaces.namespaceDependencies)
 local values = require(script.Parent.Parent.replicated.values)
 local types = require(script.Parent.Parent.types)
 

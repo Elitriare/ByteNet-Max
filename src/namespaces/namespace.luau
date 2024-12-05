@@ -9,7 +9,7 @@ local RunService = game:GetService("RunService")
 
 local values = require(script.Parent.Parent.replicated.values)
 local types = require(script.Parent.Parent.types)
-local namespacesDependencies = require(script.Parent.namespacesDependencies)
+local namespacesDependencies = require(script.Parent.namespaceDependencies)
 local packetIDs = require(script.Parent.packetIDs)
 local queryIDs = require(script.Parent.queryIDs)
 
@@ -21,18 +21,18 @@ local queryCount = 0
 return function(
 	name: string,
 	input: () -> {
-		packets: {[string]: any},
-		queries: {[string]: any}
+		packets: { [string]: any },
+		queries: { [string]: any },
 	}
 )
 	local namespaceReplicator = values.access(name)
 
 	namespacesDependencies.start(name)
 	local namespaceInput = input()
-	
+
 	local packets = namespaceInput.packets or {}
 	local queries = namespaceInput.queries or {}
-		
+
 	local structs = namespacesDependencies.empty()
 
 	local packetResult = {}
@@ -44,7 +44,7 @@ return function(
 			packets = {},
 			queries = {},
 		}
-		
+
 		for key in packets do
 			count += 1
 			constructedNamespace.packets[key] = count
@@ -52,15 +52,15 @@ return function(
 
 			packetIDs.set(count, packetResult[key])
 		end
-		
+
 		for key in queries do
 			queryCount += 1
 			constructedNamespace.queries[key] = queryCount
 			queryResult[key] = queries[key](queryCount)
-			
+
 			queryIDs.set(queryCount, queryResult[key])
 		end
-		
+
 		for index, value in structs do
 			constructedNamespace.structs[index] = value
 		end
@@ -76,17 +76,17 @@ return function(
 
 			packetIDs.set(namespaceData.packets[key], packetResult[key])
 		end
-		
+
 		for key, query in queries do
 			queryResult[key] = query(namespaceData.queries[key])
-			
+
 			queryIDs.set(namespaceData.queries[key], queryResult[key])
 		end
 	end
-	
+
 	local TotalResult = {
 		packets = packetResult,
-		queries = queryResult
+		queries = queryResult,
 	}
 
 	return TotalResult
