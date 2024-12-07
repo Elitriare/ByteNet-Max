@@ -9,6 +9,8 @@ local alloc = bufferWriter.alloc
 local u8 = bufferWriter.u8
 local load = bufferWriter.load
 
+local waitingForResponse = false
+
 local function onClientEvent(receivedBuffer, ref)
 	read(receivedBuffer, ref)
 end
@@ -60,18 +62,26 @@ function clientProcess.sendUnreliable(id: number, writer: (value: any) -> (), da
 end
 
 function clientProcess.invoke(id: number, writer: (value: any) -> (), data: {[string]: any}): any
+	if waitingForResponse then 
+		repeat task.wait() until not waitingForResponse
+	end
+
 	func = load(func)
-	
+
 	alloc(1)
 	u8(id)
 	writer(data)
-	
+
 	func = bufferWriter.export()
-	
+
 	local remoteFunction: RemoteFunction = ReplicatedStorage:WaitForChild("ByteNetQuery")
 	local dumpBuffer, reference = dump(func)
+
+	waitingForResponse = true
 	local response = remoteFunction:InvokeServer(dumpBuffer, reference)
-	
+
+	if response then waitingForResponse = false end
+
 	return response
 end
 
