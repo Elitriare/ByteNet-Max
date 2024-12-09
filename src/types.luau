@@ -40,6 +40,12 @@ export type channelData = {
 	buff: buffer,
 }
 
+export type remoteFunctionChannel = {
+	ready: boolean, 
+	response: any?, 
+	data: channelData
+}
+
 -- Used internally for serializing and deserializing all data types
 export type dataTypeInterface<T> = {
 	write: (value: T) -> (),
@@ -88,6 +94,7 @@ export type ByteNet = {
 	vec3: Vector3,
 	vec2: Vector2,
 	buff: buffer,
+	color3: Color3,
 	cframe: CFrame,
 	map: <K, V>(key: K, value: V) -> { [K]: V },
 	
