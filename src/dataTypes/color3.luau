@@ -1,7 +1,7 @@
 local bufferWriter = require(script.Parent.Parent.process.bufferWriter)
 local types = require(script.Parent.Parent.types)
 
-local uint8NoAlloc = bufferWriter.writeu8NoAlloc
+local uint8NoAlloc = bufferWriter.u8NoAlloc
 local alloc = bufferWriter.alloc
 
 local color3 = {
