@@ -88,6 +88,7 @@ export type ByteNet = {
 	vec3: Vector3,
 	vec2: Vector2,
 	buff: buffer,
+	color3: Color3,
 	cframe: CFrame,
 	map: <K, V>(key: K, value: V) -> { [K]: V },
 	
