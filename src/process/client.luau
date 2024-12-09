@@ -37,7 +37,7 @@ end
 
 local reliable: types.channelData = create()
 local unreliable: types.channelData = create()
-local funcs: {{ready: boolean, response: any?, data: types.channelData}} = {}
+local funcs: {types.remoteFunctionChannel} = {}
 
 local clientProcess = {}
 
