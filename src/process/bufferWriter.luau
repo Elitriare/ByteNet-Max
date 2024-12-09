@@ -53,6 +53,11 @@ local bufferWriter = {}
 bufferWriter.alloc = alloc
 bufferWriter.dyn_alloc = dyn_alloc
 
+function bufferWriter.u8NoAlloc(value: number)
+	buffer.writeu8(buff, cursor, value)
+	cursor += 1
+end
+
 function bufferWriter.u8(value: number)
 	alloc(1)
 	buffer.writeu8(buff, cursor, value)
