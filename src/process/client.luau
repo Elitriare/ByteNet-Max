@@ -127,6 +127,7 @@ function clientProcess.start()
 		
 		for i=#funcs,1,-1 do
 			local func = funcs[i]
+			table.remove(funcs, i)
 			
 			if (func.data.cursor > 0) then
 				local dumpBuffer, reference = dump(func.data)
@@ -137,8 +138,6 @@ function clientProcess.start()
 
 				func.data.cursor = 0
 				table.clear(func.data.references)
-				
-				table.remove(funcs, i)
 			end
 		end
 	end)
