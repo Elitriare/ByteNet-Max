@@ -37,7 +37,7 @@ end
 
 local reliable: types.channelData = create()
 local unreliable: types.channelData = create()
-local func: types.channelData = create()
+local funcs: {types.remoteFunctionChannel} = {}
 
 local clientProcess = {}
 
@@ -62,10 +62,7 @@ function clientProcess.sendUnreliable(id: number, writer: (value: any) -> (), da
 end
 
 function clientProcess.invoke(id: number, writer: (value: any) -> (), data: {[string]: any}): any
-	if waitingForResponse then 
-		repeat task.wait() until not waitingForResponse
-	end
-
+	local func = create()
 	func = load(func)
 
 	alloc(1)
@@ -74,15 +71,30 @@ function clientProcess.invoke(id: number, writer: (value: any) -> (), data: {[st
 
 	func = bufferWriter.export()
 
-	local remoteFunction: RemoteFunction = ReplicatedStorage:WaitForChild("ByteNetQuery")
-	local dumpBuffer, reference = dump(func)
-
-	waitingForResponse = true
-	local response = remoteFunction:InvokeServer(dumpBuffer, reference)
-
-	if response then waitingForResponse = false end
-
-	return response
+	local result = {
+		ready = false,
+		response = nil,
+		data = func
+	}
+	
+	table.insert(funcs, result)
+	
+	local waitingForResponse = coroutine.running()
+	
+	task.spawn(function()
+		while true do
+			if (result.ready) then
+				coroutine.resume(waitingForResponse)
+				break
+			end
+			
+			task.wait()
+		end
+	end)
+	
+	coroutine.yield()
+	
+	return result.response
 end
 
 function clientProcess.start()
@@ -113,12 +125,21 @@ function clientProcess.start()
 			table.clear(unreliable.references)
 		end
 		
-		if func.cursor > 0 then
-			local dumpBuffer, reference = dump(func)
-			local Result = remoteFunction:InvokeServer(dumpBuffer, reference)
-						
-			func.cursor = 0
-			table.clear(func.references)
+		for i=#funcs,1,-1 do
+			local func = funcs[i]
+			
+			if (func.data.cursor > 0) then
+				local dumpBuffer, reference = dump(func.data)
+				local Result = remoteFunction:InvokeServer(dumpBuffer, reference)
+				
+				func.ready = true
+				func.response = Result
+
+				func.data.cursor = 0
+				table.clear(func.data.references)
+				
+				table.remove(funcs, i)
+			end
 		end
 	end)
 end
