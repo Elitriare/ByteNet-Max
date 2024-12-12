@@ -17,7 +17,7 @@ ByteNet Max lives up to the standards of ByteNet, performing incredibly well com
 ByteNet Max follows the same architecture as ByteNet, hence the documentation for RemoteEvents (packets) is the exact same and can be found here: [Documentation](https://ffrostfall.github.io/ByteNet/api/functions/definePacket/).
 
 However, it adds a new system named **queries**. This is the ByteNet equivalent of a RemoteFunction. To begin, you can create a ModuleScript to define a namespace under which your packets and queries will be held:
-```
+```luau
 local ByteNetMax = require(path.to.ByteNetMax)
 
 return ByteNetMax.defineNamespace("PlayerData", function()
@@ -38,7 +38,7 @@ end)
 ```
 
 Then, in a local script, you can invoke the query like so:
-```
+```luau
 local QueryModule = require(path.to.QueryModule)
 
 local Coins = QueryModule.queries.GetCoins.invoke({
@@ -49,7 +49,7 @@ print(Coins)
 ```
 
 In a server script, you can receive the query and return the appropriate information, like so:
-```
+```luau
 local QueryModule = require(path.to.QueryModule)
 
 QueryModule.queries.GetCoins.listen(function(data, player)	
@@ -69,7 +69,7 @@ Packets & Queries can co-exist under the same namespace, just make sure you defi
 ByteNet Max also adds extra functions for both packets & queries for better control over your code. You can now use .listenOnce() and .mute() to call a function once or disable a callback (equivalent to the :Disconnect() and :Once() functions from Roblox)
 
 Using the example above, .listenOnce() is used the same way as .listen() : 
-```
+```luau
 local QueryModule = require(path.to.QueryModule)
 
 QueryModule.queries.GetCoins.listenOnce(function(data, player)	 -- this callback only runs once, before disconnecting.
@@ -79,7 +79,7 @@ end)
 ```
 
 The .mute() function can be used to completely erase the callback:
-```
+```luau
 local QueryModule = require(path.to.QueryModule)
 
 QueryModule.queries.GetCoins.mute() -- disconnects function
