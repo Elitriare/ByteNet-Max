@@ -109,7 +109,7 @@ return function(incomingBuffer: buffer, references: { [number]: unknown }?, play
 			elseif RunService:IsClient() then
 				value, valueLength = readablePacketOrQuery.responseReader(incomingBuffer, readCursor)
 			end
-		else
+		elseif readType == "packet" then
 			value, valueLength = readablePacketOrQuery.reader(incomingBuffer, readCursor)
 		end
 		
