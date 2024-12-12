@@ -15,7 +15,7 @@ local function onClientEvent(receivedBuffer, ref)
 	read(receivedBuffer, ref)
 end
 
--- Shared with: src/process/server.luau (Infeasible to split this into another file)
+-- Shared with: src/process/server.luau, src/process/read.luau (Infeasible to split this into another file)
 local function create()
 	return {
 		cursor = 0,
@@ -61,40 +61,43 @@ function clientProcess.sendUnreliable(id: number, writer: (value: any) -> (), da
 	unreliable = bufferWriter.export()
 end
 
-function clientProcess.invoke(id: number, writer: (value: any) -> (), data: {[string]: any}): any
+function clientProcess.invoke(id: number, requestWriter: (value: any) -> (), data: {[string]: any}): any
 	local func = create()
 	func = load(func)
 
 	alloc(1)
 	u8(id)
-	writer(data)
+	requestWriter(data)
 
 	func = bufferWriter.export()
 
 	local result = {
 		ready = false,
-		response = nil,
-		data = func
+		response = {},
+		data = func,
+		id = id
 	}
-	
+
 	table.insert(funcs, result)
-	
+
 	local waitingForResponse = coroutine.running()
-	
+
 	task.spawn(function()
 		while true do
 			if (result.ready) then
 				coroutine.resume(waitingForResponse)
 				break
 			end
-			
+
 			task.wait()
 		end
 	end)
-	
+
 	coroutine.yield()
-	
-	return result.response
+		
+	local decodedData = read(result.response.dumpBuffer, result.response.reference, nil, "query")
+
+	return decodedData
 end
 
 function clientProcess.start()
@@ -103,7 +106,7 @@ function clientProcess.start()
 
 	local unreliableRemote = ReplicatedStorage:WaitForChild("ByteNetUnreliable")
 	unreliableRemote.OnClientEvent:Connect(onClientEvent)
-	
+
 	local remoteFunction: RemoteFunction = ReplicatedStorage:WaitForChild("ByteNetQuery")
 
 	RunService.Heartbeat:Connect(function()
@@ -124,21 +127,26 @@ function clientProcess.start()
 			unreliable.cursor = 0
 			table.clear(unreliable.references)
 		end
-		
-		for i=#funcs,1,-1 do
-			local func = funcs[i]
-			table.remove(funcs, i)
-			
-			if (func.data.cursor > 0) then
-				local dumpBuffer, reference = dump(func.data)
-				local Result = remoteFunction:InvokeServer(dumpBuffer, reference)
-				
-				func.ready = true
-				func.response = Result
 
-				func.data.cursor = 0
-				table.clear(func.data.references)
-			end
+		for i=#funcs,1,-1 do
+			task.spawn(function()
+				local func = funcs[i]
+				table.remove(funcs, i)
+
+				if (func.data.cursor > 0) then
+					local dumpBuffer, reference = dump(func.data)
+					local ResultDumpBuffer, ResultReference = remoteFunction:InvokeServer(dumpBuffer, reference, func.id)
+
+					func.ready = true
+					func.response = {
+						dumpBuffer = ResultDumpBuffer,
+						reference = ResultReference
+					}
+
+					func.data.cursor = 0
+					table.clear(func.data.references)
+				end
+			end)
 		end
 	end)
 end

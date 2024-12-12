@@ -1,7 +1,16 @@
 --!native
+
+local RunService = game:GetService("RunService")
+
 local packetIDs = require(script.Parent.Parent.namespaces.packetIDs)
 local queryIDs = require(script.Parent.Parent.namespaces.queryIDs)
 local readRefs = require(script.Parent.readRefs)
+local types = require(script.Parent.Parent.types)
+local bufferWriter = require(script.Parent.bufferWriter)
+
+local alloc = bufferWriter.alloc
+local u8 = bufferWriter.u8
+local load = bufferWriter.load
 
 local packetRef = packetIDs.ref()
 local queryRef = queryIDs.ref()
@@ -43,13 +52,31 @@ local function runQueryListener(callback, ...)
 	return result
 end
 
-return function(incomingBuffer: buffer, references: { [number]: unknown }?, player: Player?, readType: string?)
+local function create()
+	return {
+		cursor = 0,
+		size = 256,
+		references = {},
+		buff = buffer.create(256),
+	}
+end
+
+local function dump(channel: types.channelData): (buffer, { unknown }?)
+	local cursor = channel.cursor
+	local dumpBuffer = buffer.create(cursor)
+
+	buffer.copy(dumpBuffer, 0, channel.buff, 0, cursor)
+
+	return dumpBuffer, if #channel.references > 0 then channel.references else nil
+end
+
+return function(incomingBuffer: buffer, references: { [number]: unknown }?, player: Player?, readType: string?, id: number?)
 	local length = buffer.len(incomingBuffer)
 	local readCursor = 0
 	readType = readType or "packet"
 
 	readRefs.set(references)
-
+		
 	while readCursor < length do
 		local readablePacketOrQuery
 		
@@ -66,9 +93,15 @@ return function(incomingBuffer: buffer, references: { [number]: unknown }?, play
 		end
 		
 		readCursor += 1
-
-		local value, valueLength = readablePacketOrQuery.reader(incomingBuffer, readCursor)
-
+		
+		local value, valueLength
+		
+		if RunService:IsServer() then
+			value, valueLength = readablePacketOrQuery.requestReader(incomingBuffer, readCursor)
+		elseif RunService:IsClient() then
+			value, valueLength = readablePacketOrQuery.responseReader(incomingBuffer, readCursor)
+		end
+		
 		readCursor += valueLength
 
 		if readType == "packet" then
@@ -76,11 +109,28 @@ return function(incomingBuffer: buffer, references: { [number]: unknown }?, play
 				runListener(listener, value, player)
 			end
 		elseif readType == "query" then
-			for _, listener in readablePacketOrQuery.getListeners() do
-				local response = runQueryListener(listener, value, player)
-				
-				return response
-			end	
+			if RunService:IsServer() then
+				for _, listener in readablePacketOrQuery.getListeners() do
+					local response = runQueryListener(listener, value, player)
+					
+					local func = create()
+					func = load(func)
+					
+					alloc(1)
+					u8(id)
+					readablePacketOrQuery.responseWriter(response)
+					
+					func = bufferWriter.export()
+										
+					if func.cursor > 0 then
+						local dumpBuffer, reference = dump(func)
+												
+						return dumpBuffer, reference
+					end
+				end	
+			elseif RunService:IsClient() then
+				return value
+			end
 		end
 	end
 end

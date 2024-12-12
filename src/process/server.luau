@@ -15,8 +15,9 @@ local load = bufferWriter.load
 -- All channelData is set to nil upon being sent which is why these are all optionals
 local perPlayerReliable: { [Player]: types.channelData } = {}
 local perPlayerUnreliable: { [Player]: types.channelData } = {}
+local functions: {types.remoteFunctionChannel} = {}
 
--- Shared with: src/process/client.luau (Infeasible to split this into another file)
+-- Shared with: src/process/client.luau, src/process/read.luau (Infeasible to split this into another file)
 local function create()
 	return {
 		cursor = 0,
@@ -49,15 +50,15 @@ local function onServerEvent(player: Player, data, references)
 	read(data, references, player)
 end
 
-local function onServerInvoke(player: Player, data, references)
+local function onServerInvoke(player: Player, data, references, id: number)
 	if not (typeof(data) == "buffer") then
 		warn("Only buffer types accepted.")
 		return
 	end
 	
-	local response = read(data, references, player, "query")
-	
-	return response
+	local dumpBuffer, reference = read(data, references, player, "query", id)
+		
+	return dumpBuffer, reference
 end
 
 local function playerAdded(player)

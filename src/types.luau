@@ -32,7 +32,7 @@ export type queryProperties<RequestType, ResponseType> = {
 	}?
 }
 
--- Used internally for
+-- Used internally for packet & query request/response queues 
 export type channelData = {
 	cursor: number,
 	size: number,
@@ -43,7 +43,8 @@ export type channelData = {
 export type remoteFunctionChannel = {
 	ready: boolean, 
 	response: any?, 
-	data: channelData
+	data: channelData,
+	id: number
 }
 
 -- Used internally for serializing and deserializing all data types
@@ -73,7 +74,7 @@ type Query<RequestType, ResponseType> = {
 export type ByteNet = {
 	definePacket: <T>(props: packetProps<T>) -> Packet<T>,
 	defineQuery: <RequestType, ResponseType>(properties: queryProperties<RequestType, ResponseType>) -> Query<RequestType, ResponseType>,
-	defineNamespace: <T>(name: string, namespace: () -> T) -> T,
+	defineNamespace: <T>(name: string, namespace: () -> namespaceData & T) -> T,
 
 	struct: <T>(format: T) -> T,
 	bool: boolean,
@@ -97,7 +98,7 @@ export type ByteNet = {
 	color3: Color3,
 	cframe: CFrame,
 	map: <K, V>(key: K, value: V) -> { [K]: V },
-	
+
 	-- TYPES
 	playerIdentifier: number,
 	playerName: string,

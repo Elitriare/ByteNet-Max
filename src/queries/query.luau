@@ -9,19 +9,22 @@ local server = require(script.Parent.Parent.process.server)
 
 local moduleRunContext: "server" | "client" = if RunService:IsServer() then "server" else "client"
 
-return function(properties: types.queryProperties<types.dataTypeInterface<any>>, id: number)
+return function(properties: types.queryProperties<types.dataTypeInterface<any>, types.dataTypeInterface<any>>, id: number)
 	local listeners = {}
 	
-	local clientInvokeFunction: (id: number, writer: (value: any) -> (), data: any) -> any = client.invoke
+	local clientInvokeFunction: (id: number, requestWriter: (value: any) -> (), data: any) -> any = client.invoke
 	
-	local writer = properties.request.write
+	local requestWriter = properties.request.write
+	local responseWriter = properties.response.write
 	
 	local exported = {}
-	exported.reader = properties.request.read
+	exported.requestReader = properties.request.read
+	exported.responseReader = properties.response.read
+	exported.responseWriter = properties.response.write
 	
 	if moduleRunContext == "client" then
 		function exported.invoke(data)
-			local response = clientInvokeFunction(id, writer, data)
+			local response = clientInvokeFunction(id, requestWriter, data)
 			
 			return response
 		end
