@@ -62,12 +62,16 @@ type Packet<T> = {
 	wait: () -> T,
 	send: (data: T, target: Player?) -> (),
 	listen: (callback: (data: T, player: Player?) -> ()) -> (),
+	listenOnce: (callback: (data: T, player: Player?) -> ()) -> (),
+	mute: () -> ()
 }
 
 -- used as return result in defineQuery
 type Query<RequestType, ResponseType> = {
 	invoke: (request: RequestType, target: Player?) -> ResponseType,
-	listen: (callback: (request: RequestType, player: Player?) -> ResponseType) -> ()
+	listen: (callback: (request: RequestType, player: Player?) -> ResponseType) -> (),
+	listenOnce: (callback: (request: RequestType, player: Player?) -> ResponseType) -> (),
+	mute: () -> ()
 }
 
 -- Library type

@@ -29,16 +29,19 @@ local function yielder()
 	end
 end
 
-local function runListener(callback, ...)
+local function runListener(callback, listenOnce: boolean, packet, ...)
 	if freeThread == nil then
 		freeThread = coroutine.create(yielder)
 		coroutine.resume(freeThread :: thread)
 	end
 
 	task.spawn(freeThread :: thread, callback, ...)
+	if listenOnce then
+		packet.mute()
+	end
 end
 
-local function runQueryListener(callback, ...)
+local function runQueryListener(callback, listenOnce: boolean, query, ...)
 	local result 
 	if freeThread == nil then
 		freeThread = coroutine.create(yielder)
@@ -48,6 +51,10 @@ local function runQueryListener(callback, ...)
 	task.spawn(freeThread :: thread, function(...)
 		result = callback(...)
 	end, ...)
+	
+	if listenOnce then
+		query.mute()
+	end
 		
 	return result
 end
@@ -96,22 +103,41 @@ return function(incomingBuffer: buffer, references: { [number]: unknown }?, play
 		
 		local value, valueLength
 		
-		if RunService:IsServer() then
-			value, valueLength = readablePacketOrQuery.requestReader(incomingBuffer, readCursor)
-		elseif RunService:IsClient() then
-			value, valueLength = readablePacketOrQuery.responseReader(incomingBuffer, readCursor)
+		if readType == "query" then
+			if RunService:IsServer() then
+				value, valueLength = readablePacketOrQuery.requestReader(incomingBuffer, readCursor)
+			elseif RunService:IsClient() then
+				value, valueLength = readablePacketOrQuery.responseReader(incomingBuffer, readCursor)
+			end
+		else
+			value, valueLength = readablePacketOrQuery.reader(incomingBuffer, readCursor)
 		end
+		
 		
 		readCursor += valueLength
 
 		if readType == "packet" then
 			for _, listener in readablePacketOrQuery.getListeners() do
-				runListener(listener, value, player)
+				if typeof(listener) == "table" then
+					runListener(listener["OnceCallback"], true, readablePacketOrQuery, value, player)
+				elseif typeof(listener) == "function" then
+					runListener(listener, false, readablePacketOrQuery, value, player)
+				else
+					error("Listener type not recognised for packet: " .. typeof(listener))
+				end
 			end
 		elseif readType == "query" then
 			if RunService:IsServer() then
 				for _, listener in readablePacketOrQuery.getListeners() do
-					local response = runQueryListener(listener, value, player)
+					local response 
+					
+					if typeof(listener) == "table" then
+						response = runQueryListener(listener["OnceCallback"], true, readablePacketOrQuery, value, player)
+					elseif typeof(listener) == "function" then
+						response = runQueryListener(listener, false, readablePacketOrQuery, value, player)
+					else
+						error("Listener type not recognised for query: " .. typeof(listener))
+					end
 					
 					local func = create()
 					func = load(func)

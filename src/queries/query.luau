@@ -50,6 +50,16 @@ return function(properties: types.queryProperties<types.dataTypeInterface<any>, 
 		table.insert(listeners, callback)
 	end
 	
+	function exported.mute()
+		table.clear(listeners)
+	end
+	
+	function exported.listenOnce(callback)
+		table.insert(listeners, {
+			["OnceCallback"] = callback	
+		})
+	end
+	
 	function exported.getListeners()
 		return listeners
 	end
