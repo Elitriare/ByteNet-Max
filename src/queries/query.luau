@@ -48,10 +48,18 @@ return function(properties: types.queryProperties<types.dataTypeInterface<any>, 
 	
 	function exported.listen(callback)
 		table.insert(listeners, callback)
+		
+		return function()
+			exported.disconnect(callback)
+		end
 	end
 	
-	function exported.mute()
+	function exported.disconnectAll()
 		table.clear(listeners)
+	end
+	
+	function exported.disconnect(callback)
+		table.remove(listeners, table.find(listeners, callback))
 	end
 	
 	function exported.listenOnce(callback)

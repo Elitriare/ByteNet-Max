@@ -37,7 +37,7 @@ local function runListener(callback, listenOnce: boolean, packet, ...)
 
 	task.spawn(freeThread :: thread, callback, ...)
 	if listenOnce then
-		packet.mute()
+		packet.disconnect(callback)
 	end
 end
 
@@ -53,7 +53,7 @@ local function runQueryListener(callback, listenOnce: boolean, query, ...)
 	end, ...)
 	
 	if listenOnce then
-		query.mute()
+		query.disconnect(callback)
 	end
 		
 	return result

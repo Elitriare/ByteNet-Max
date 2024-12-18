@@ -104,18 +104,26 @@ return function(props: types.packetProps<types.dataTypeInterface<any>>, id: numb
 
 	function exported.listen(callback)
 		table.insert(listeners, callback)
+		
+		return function()
+			exported.disconnect(callback)
+		end
 	end
 	
-	function exported.mute()
+	function exported.disconnectAll()
 		table.clear(listeners)
 	end
-
+	
+	function exported.disconnect(callback)
+		table.remove(listeners, table.find(listeners, callback))
+	end
+	
 	function exported.listenOnce(callback)
 		table.insert(listeners, {
 			["OnceCallback"] = callback	
 		})
 	end
-
+	
 	function exported.getListeners()
 		return listeners
 	end
