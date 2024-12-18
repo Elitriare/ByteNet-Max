@@ -1,12 +1,12 @@
 <div align="center"><h1><b>ByteNet Max</b></h1></div>
 <div align="center"><h2><b>An upgraded buffer-based networking system</b></h2></div>
-<div align="center"><a href="https://github.com/Elitriare/ByteNet-Max">GitHub</a> | <a href="https://wally.run/package/elitriare/bytenet-max?version=0.1.7">Wally</a> | <a href="https://create.roblox.com/store/asset/81428213632345/ByteNet-Max">Roblox Creator Store</a></div>
+<div align="center"><a href="https://github.com/Elitriare/ByteNet-Max">GitHub</a> | <a href="https://wally.run/package/elitriare/bytenet-max?version=0.1.8">Wally</a> | <a href="https://create.roblox.com/store/asset/81428213632345/ByteNet-Max">Roblox Creator Store</a></div>
 
 ByteNet Max is an upgraded version of @ffrostfall's [ByteNet](https://devforum.roblox.com/t/bytenet-advanced-networking-library-w-buffer-serialization-strict-luau-absurd-optimization-and-rbxts-support-043/2733365) which relies on strict type-checking to serialise your data into buffers before deserialising it on the other end, feeding it back to your Luau code. But what makes ByteNet Max different from ByteNet? ByteNet Max supports queries (RemoteFunctions) which are client to server requests for data. This brings you an extremely optimised experience for RemoteFunctions, using minimal data to increase send and receive speeds. ByteNet Max lives up to ByteNet's idea of making networking simple, easy and quick. The API is simple and minimalistic, helping you grasp the concepts of ByteNet Max pretty quickly!
 
 <h3><b>Installation</b></h3> 
 
-Get [ByteNet Max](https://create.roblox.com/store/asset/81428213632345/ByteNet-Max) on the Roblox Creator Store, or on [Wally](https://wally.run/package/elitriare/bytenet-max?version=0.1.7)!
+Get [ByteNet Max](https://create.roblox.com/store/asset/81428213632345/ByteNet-Max) on the Roblox Creator Store, or on [Wally](https://wally.run/package/elitriare/bytenet-max?version=0.1.8) **(WARNING: v1.0.0 is the FIRST version of ByteNet Max, due to an error I made. The latest version is always the one shown on the title of this post)**!
 
 <h3><b>Performance</b></h3> 
 
@@ -17,7 +17,7 @@ ByteNet Max lives up to the standards of ByteNet, performing incredibly well com
 ByteNet Max follows the same architecture as ByteNet, hence the documentation for RemoteEvents (packets) is the exact same and can be found here: [Documentation](https://ffrostfall.github.io/ByteNet/api/functions/definePacket/).
 
 However, it adds a new system named **queries**. This is the ByteNet equivalent of a RemoteFunction. To begin, you can create a ModuleScript to define a namespace under which your packets and queries will be held:
-```luau
+```lua
 local ByteNetMax = require(path.to.ByteNetMax)
 
 return ByteNetMax.defineNamespace("PlayerData", function()
@@ -38,7 +38,7 @@ end)
 ```
 
 Then, in a local script, you can invoke the query like so:
-```luau
+```lua
 local QueryModule = require(path.to.QueryModule)
 
 local Coins = QueryModule.queries.GetCoins.invoke({
@@ -49,7 +49,7 @@ print(Coins)
 ```
 
 In a server script, you can receive the query and return the appropriate information, like so:
-```luau
+```lua
 local QueryModule = require(path.to.QueryModule)
 
 QueryModule.queries.GetCoins.listen(function(data, player)	
@@ -57,6 +57,21 @@ QueryModule.queries.GetCoins.listen(function(data, player)
 	return {coins = player.leaderstats.Coins.Value}
 end)
 ```
+
+If you want to disconnect the listener in the future, you can assign the function to a variable:
+```lua
+local QueryModule = require(path.to.QueryModule)
+local Listener 
+
+Listener = QueryModule.queries.GetCoins.listen(function(data, player)	
+    print(data.message) -- prints "Can I please get the coins value?"
+	return {coins = player.leaderstats.Coins.Value}
+end)
+
+Listener() -- disconnects listener
+```
+
+The above function works with **packets** too!
 
 It's that simple!
 
@@ -66,10 +81,10 @@ Packets & Queries can co-exist under the same namespace, just make sure you defi
 
 <h2>Some extra functions</h2>
 
-ByteNet Max also adds extra functions for both packets & queries for better control over your code. You can now use .listenOnce() and .mute() to call a function once or disable a callback (equivalent to the :Disconnect() and :Once() functions from Roblox)
+ByteNet Max also adds extra functions for both packets & queries for better control over your code. You can now use .listenOnce() and .disconnectAll() to call a function once or disable all callbacks connected to a packet/query (equivalent to the :Disconnect() and :Once() functions from Roblox)
 
 Using the example above, .listenOnce() is used the same way as .listen() : 
-```luau
+```lua
 local QueryModule = require(path.to.QueryModule)
 
 QueryModule.queries.GetCoins.listenOnce(function(data, player)	 -- this callback only runs once, before disconnecting.
@@ -78,11 +93,11 @@ QueryModule.queries.GetCoins.listenOnce(function(data, player)	 -- this callback
 end)
 ```
 
-The .mute() function can be used to completely erase the callback:
-```luau
+The .disconnectAll() function can be used to completely erase every callback created through .listen():
+```lua
 local QueryModule = require(path.to.QueryModule)
 
-QueryModule.queries.GetCoins.mute() -- disconnects function
+QueryModule.queries.GetCoins.disconnectAll() -- disconnects all callbacks
 ```
 
 <h3><b>Contact</b></h3> 
