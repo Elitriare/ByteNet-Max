@@ -43,6 +43,7 @@ end
 
 local function runQueryListener(callback, listenOnce: boolean, query, ...)
 	local result 
+	local ts = tick();
 	if freeThread == nil then
 		freeThread = coroutine.create(yielder)
 		coroutine.resume(freeThread :: thread)
@@ -51,6 +52,14 @@ local function runQueryListener(callback, listenOnce: boolean, query, ...)
 	task.spawn(freeThread :: thread, function(...)
 		result = callback(...)
 	end, ...)
+	
+	repeat
+		task.wait()
+	until result or (tick() - ts) > 10;
+	
+	if not result then
+		warn("queryResult hung for 10 seconds, returning null.")
+	end
 	
 	if listenOnce then
 		query.disconnect(callback)
