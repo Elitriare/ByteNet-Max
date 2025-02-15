@@ -16,6 +16,75 @@ ByteNet Max lives up to the standards of ByteNet, performing incredibly well com
 
 ByteNet Max follows the same architecture as ByteNet, hence the documentation for RemoteEvents (packets) is the exact same and can be found here: [Documentation](https://ffrostfall.github.io/ByteNet/api/functions/definePacket/).
 
+ **Due to ByteNet documentation being outdated, here is a simple setup guide for a remote event.**
+
+
+**Packets ModuleScript:**
+Create a ModuleScript that will hold your namespaces.
+```lua
+local ByteNetMax = require(script.Parent:WaitForChild('ByteNetMax'))
+
+return ByteNetMax.defineNamespace("Main", function()
+	return {
+		packets = {
+
+			Test = ByteNetMax.definePacket({
+				value = ByteNetMax.struct({
+					Action = ByteNetMax.string,
+					Data = ByteNetMax.string
+				}),
+			})
+		}
+	}
+
+end)
+```
+
+**Server listener:**
+Create a simple script to listen to this event, and prints out what the client sent.
+```lua
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local BytePackets = require(ReplicatedStorage:WaitForChild("Libraries"):WaitForChild('Packets'))
+
+
+BytePackets.packets.Test.listen(function(data, plr)
+	
+	-- prints the action
+	print(data.Action)
+	
+	-- prints some other data
+	print(data.Data)
+	
+	
+end)
+```
+
+**Localscript that sends information:**
+This is just a simple script that sends over your input to the server.
+```lua
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local BytePackets = require(ReplicatedStorage:WaitForChild("Libraries"):WaitForChild('Packets'))
+
+UserInputService.InputBegan:Connect(function(Input, gameProcessed)
+	
+	if gameProcessed or Input.KeyCode.Name == "Unknown" then return end
+	
+	
+	BytePackets.packets.Test.send({
+		Action = Input.KeyCode.Name,
+		Data = 'Whatever data you want to go along with the action here'
+	})
+	
+end)
+```
+
+<h3><b>Max-specific Documentation</b></h3> 
+
+
 However, it adds a new system named **queries**. This is the ByteNet equivalent of a RemoteFunction. To begin, you can create a ModuleScript to define a namespace under which your packets and queries will be held:
 ```lua
 local ByteNetMax = require(path.to.ByteNetMax)
@@ -99,6 +168,7 @@ local QueryModule = require(path.to.QueryModule)
 
 QueryModule.queries.GetCoins.disconnectAll() -- disconnects all callbacks
 ```
+
 
 <h3><b>Contact</b></h3> 
 
