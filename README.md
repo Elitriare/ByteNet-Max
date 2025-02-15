@@ -22,7 +22,7 @@ ByteNet Max follows the same architecture as ByteNet, hence the documentation fo
 **Packets ModuleScript:**
 Create a ModuleScript that will hold your namespaces.
 ```lua
-local ByteNetMax = require(script.Parent:WaitForChild('ByteNetMax'))
+local ByteNetMax = require(path.to.ByteNetMax)
 
 return ByteNetMax.defineNamespace("Main", function()
 	return {
@@ -46,7 +46,7 @@ Create a simple script to listen to this event, and prints out what the client s
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local BytePackets = require(ReplicatedStorage:WaitForChild("Libraries"):WaitForChild('Packets'))
+local BytePackets = require(path.to.Packets_ModuleScript)
 
 
 BytePackets.packets.Test.listen(function(data, plr)
@@ -67,7 +67,7 @@ This is just a simple script that sends over your input to the server.
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local BytePackets = require(ReplicatedStorage:WaitForChild("Libraries"):WaitForChild('Packets'))
+local BytePackets = require(path.to.Packets_ModuleScript)
 
 UserInputService.InputBegan:Connect(function(Input, gameProcessed)
 	
