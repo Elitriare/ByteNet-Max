@@ -15,7 +15,7 @@ local load = bufferWriter.load
 -- All channelData is set to nil upon being sent which is why these are all optionals
 local perPlayerReliable: { [Player]: types.channelData } = {}
 local perPlayerUnreliable: { [Player]: types.channelData } = {}
-local functions: {types.remoteFunctionChannel} = {}
+local functions: { types.remoteFunctionChannel } = {}
 
 -- Shared with: src/process/client.luau, src/process/read.luau (Infeasible to split this into another file)
 local function create()
@@ -55,9 +55,9 @@ local function onServerInvoke(player: Player, data, references, id: number)
 		warn("Only buffer types accepted.")
 		return
 	end
-	
+
 	local dumpBuffer, reference = read(data, references, player, "query", id)
-		
+
 	return dumpBuffer, reference
 end
 
@@ -68,6 +68,19 @@ local function playerAdded(player)
 
 	if not perPlayerUnreliable[player] then
 		perPlayerUnreliable[player] = create()
+	end
+end
+
+local function playerRemoving(player)
+	local reliableEventCursor = perPlayerReliable[player]
+	local unreliableEventCursor = perPlayerUnreliable[player]
+
+	if reliableEventCursor ~= nil then
+		perPlayerReliable[player] = nil
+	end
+
+	if unreliableEventCursor ~= nil then
+		perPlayerUnreliable[player] = nil
 	end
 end
 
@@ -133,7 +146,7 @@ function serverProcess.start()
 	unreliableRemote.Name = "ByteNetUnreliable"
 	unreliableRemote.OnServerEvent:Connect(onServerEvent)
 	unreliableRemote.Parent = ReplicatedStorage
-	
+
 	local remoteFunc = Instance.new("RemoteFunction")
 	remoteFunc.Name = "ByteNetQuery"
 	remoteFunc.OnServerInvoke = onServerInvoke
@@ -144,6 +157,7 @@ function serverProcess.start()
 	end
 
 	Players.PlayerAdded:Connect(playerAdded)
+	Players.PlayerRemoving:Connect(playerRemoving)
 
 	RunService.Heartbeat:Connect(function()
 		-- Check if the channel has anything before trying to send it
@@ -164,20 +178,23 @@ function serverProcess.start()
 		end
 
 		for _, player in Players:GetPlayers() do
-			if perPlayerReliable[player].cursor > 0 then
-				local b, r = dump(perPlayerReliable[player])
+			local reliableEventCursor = perPlayerReliable[player]
+			local unreliableEventCursor = perPlayerUnreliable[player]
+
+			if reliableEventCursor ~= nil and reliableEventCursor.cursor > 0 then
+				local b, r = dump(reliableEventCursor)
 				reliableRemote:FireClient(player, b, r)
 
-				perPlayerReliable[player].cursor = 0
-				table.clear(perPlayerReliable[player].references)
+				reliableEventCursor.cursor = 0
+				table.clear(reliableEventCursor.references)
 			end
 
-			if perPlayerUnreliable[player].cursor > 0 then
-				local b, r = dump(perPlayerUnreliable[player])
+			if unreliableEventCursor ~= nil and unreliableEventCursor.cursor > 0 then
+				local b, r = dump(unreliableEventCursor)
 				unreliableRemote:FireClient(player, b, r)
 
-				perPlayerUnreliable[player].cursor = 0
-				table.clear(perPlayerUnreliable[player].references)
+				unreliableEventCursor.cursor = 0
+				table.clear(unreliableEventCursor.references)
 			end
 		end
 	end)
