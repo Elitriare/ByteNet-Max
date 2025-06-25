@@ -1,12 +1,12 @@
 <div align="center"><h1><b>ByteNet Max</b></h1></div>
 <div align="center"><h2><b>An upgraded buffer-based networking system</b></h2></div>
-<div align="center"><a href="https://github.com/Elitriare/ByteNet-Max">GitHub</a> | <a href="https://wally.run/package/elitriare/bytenet-max?version=0.2.0">Wally</a> | <a href="https://create.roblox.com/store/asset/81428213632345/ByteNet-Max">Roblox Creator Store</a></div>
+<div align="center"><a href="https://github.com/Elitriare/ByteNet-Max">GitHub</a> | <a href="https://wally.run/package/elitriare/bytenet-max?version=0.2.1">Wally</a> | <a href="https://create.roblox.com/store/asset/81428213632345/ByteNet-Max">Roblox Creator Store</a></div>
 
 ByteNet Max is an upgraded version of @ffrostfall's [ByteNet](https://devforum.roblox.com/t/bytenet-advanced-networking-library-w-buffer-serialization-strict-luau-absurd-optimization-and-rbxts-support-043/2733365) which relies on strict type-checking to serialise your data into buffers before deserialising it on the other end, feeding it back to your Luau code. But what makes ByteNet Max different from ByteNet? ByteNet Max supports queries (RemoteFunctions) which are client to server requests for data. This brings you an extremely optimised experience for RemoteFunctions, using minimal data to increase send and receive speeds. ByteNet Max lives up to ByteNet's idea of making networking simple, easy and quick. The API is simple and minimalistic, helping you grasp the concepts of ByteNet Max pretty quickly!
 
 <h3><b>Installation</b></h3> 
 
-Get [ByteNet Max](https://create.roblox.com/store/asset/81428213632345/ByteNet-Max) on the Roblox Creator Store, or on [Wally](https://wally.run/package/elitriare/bytenet-max?version=0.2.0) **(WARNING: v1.0.0 is the FIRST version of ByteNet Max, due to an error I made. The latest version is always the one shown on the title of this post)**!
+Get [ByteNet Max](https://create.roblox.com/store/asset/81428213632345/ByteNet-Max) on the Roblox Creator Store, or on [Wally](https://wally.run/package/elitriare/bytenet-max?version=0.2.1) **(WARNING: v1.0.0 is the FIRST version of ByteNet Max, due to an error I made. The latest version is always the one shown on the title of this post)**!
 
 <h3><b>Performance</b></h3> 
 
