@@ -11,14 +11,45 @@ local load = bufferWriter.load
 
 local waitingForResponse = false
 local MAX_BUFFER_SIZE = 4096
+local rateLimit = {
+	bytesPerSec = MAX_BUFFER_SIZE,
+	refillRate = MAX_BUFFER_SIZE,
+	lastTime = os.clock(),
+	currentBytes = MAX_BUFFER_SIZE
+}
 
 local function onClientEvent(receivedBuffer, ref)
 	read(receivedBuffer, ref)
 end
 
+local function allowedToSend(size)
+	local now = os.clock()
+	local elapsed = now - rateLimit.lastTime
+	
+	rateLimit.currentBytes = math.min(
+		rateLimit.currentBytes + (elapsed * rateLimit.refillRate),
+		rateLimit.bytesPerSec
+	)
+	rateLimit.lastTime = now
+	
+	if rateLimit.currentBytes >= size then
+		rateLimit.currentBytes -= size
+		return true
+	else
+		return false
+	end
+end
+
 local function handleBindable(dumpBuffer, reference, remote)
-	if typeof(dumpBuffer) ~= "buffer" or buffer.len(dumpBuffer) > MAX_BUFFER_SIZE then
+	local size = buffer.len(dumpBuffer)
+	
+	if typeof(dumpBuffer) ~= "buffer" or size > MAX_BUFFER_SIZE then
 		warn(`Buffer exceeds size limit of {MAX_BUFFER_SIZE}! This event has been blocked. Edit MAX_BUFFER_SIZE in src/process/client.luau`)
+		return
+	end
+	
+	if not allowedToSend(size) then
+		warn("Rate limit exceeded!")
 		return
 	end
 	
@@ -26,8 +57,15 @@ local function handleBindable(dumpBuffer, reference, remote)
 end
 
 local function handleBindableFunc(dumpBuffer, reference, id, func: RemoteFunction)
-	if typeof(dumpBuffer) ~= "buffer" or buffer.len(dumpBuffer) > MAX_BUFFER_SIZE then
+	local size = buffer.len(dumpBuffer)
+
+	if typeof(dumpBuffer) ~= "buffer" or size > MAX_BUFFER_SIZE then
 		warn(`Buffer exceeds size limit of {MAX_BUFFER_SIZE}! This function has been blocked. Edit MAX_BUFFER_SIZE in src/process/client.luau`)
+		return
+	end
+	
+	if not allowedToSend(size) then
+		warn("Rate limit exceeded!")
 		return
 	end
 	
