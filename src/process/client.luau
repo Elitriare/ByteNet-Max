@@ -10,9 +10,28 @@ local u8 = bufferWriter.u8
 local load = bufferWriter.load
 
 local waitingForResponse = false
+local MAX_BUFFER_SIZE = 4096
 
 local function onClientEvent(receivedBuffer, ref)
 	read(receivedBuffer, ref)
+end
+
+local function handleBindable(dumpBuffer, reference, remote)
+	if typeof(dumpBuffer) ~= "buffer" or buffer.len(dumpBuffer) > MAX_BUFFER_SIZE then
+		warn(`Buffer exceeds size limit of {MAX_BUFFER_SIZE}! This event has been blocked. Edit MAX_BUFFER_SIZE in src/process/client.luau`)
+		return
+	end
+	
+	remote:FireServer(dumpBuffer, reference)
+end
+
+local function handleBindableFunc(dumpBuffer, reference, id, func: RemoteFunction)
+	if typeof(dumpBuffer) ~= "buffer" or buffer.len(dumpBuffer) > MAX_BUFFER_SIZE then
+		warn(`Buffer exceeds size limit of {MAX_BUFFER_SIZE}! This function has been blocked. Edit MAX_BUFFER_SIZE in src/process/client.luau`)
+		return
+	end
+	
+	return func:InvokeServer(dumpBuffer, reference, id)
 end
 
 -- Shared with: src/process/server.luau, src/process/read.luau (Infeasible to split this into another file)
@@ -101,19 +120,28 @@ function clientProcess.invoke(id: number, requestWriter: (value: any) -> (), dat
 end
 
 function clientProcess.start()
-	local reliableRemote = ReplicatedStorage:WaitForChild("ByteNetReliable")
+	local bindable: BindableEvent = ReplicatedStorage:WaitForChild("ByteNetMaxRemote")
+	bindable.Event:Connect(handleBindable)
+	
+	local bindableFunc: BindableFunction = ReplicatedStorage:WaitForChild("ByteNetMaxQuery")
+	bindableFunc.OnInvoke = handleBindableFunc
+	
+	local eventsFolder = script.Parent.Parent:WaitForChild("system")
+	
+	local reliableRemote = eventsFolder:WaitForChild("ByteNetReliable")
 	reliableRemote.OnClientEvent:Connect(onClientEvent)
 
-	local unreliableRemote = ReplicatedStorage:WaitForChild("ByteNetUnreliable")
+	local unreliableRemote = eventsFolder:WaitForChild("ByteNetUnreliable")
 	unreliableRemote.OnClientEvent:Connect(onClientEvent)
 
-	local remoteFunction: RemoteFunction = ReplicatedStorage:WaitForChild("ByteNetQuery")
+	local remoteFunction: RemoteFunction = eventsFolder:WaitForChild("ByteNetQuery")
 
 	RunService.Heartbeat:Connect(function()
 		-- Again, checking if there's anything in the channel before we send it.
 		if reliable.cursor > 0 then
 			local b, r = dump(reliable)
-			reliableRemote:FireServer(b, r)
+			bindable:Fire(b, r, reliableRemote)
+			--reliableRemote:FireServer(b, r)
 
 			-- effectively clears the channel
 			reliable.cursor = 0
@@ -122,7 +150,8 @@ function clientProcess.start()
 
 		if unreliable.cursor > 0 then
 			local b, r = dump(unreliable)
-			unreliableRemote:FireServer(b, r)
+			bindable:Fire(b, r, unreliableRemote)
+			--unreliableRemote:FireServer(b, r)
 
 			unreliable.cursor = 0
 			table.clear(unreliable.references)
@@ -135,7 +164,8 @@ function clientProcess.start()
 
 				if (func.data.cursor > 0) then
 					local dumpBuffer, reference = dump(func.data)
-					local ResultDumpBuffer, ResultReference = remoteFunction:InvokeServer(dumpBuffer, reference, func.id)
+					local ResultDumpBuffer, ResultReference = bindableFunc:Invoke(dumpBuffer, reference, func.id, remoteFunction)
+					--local ResultDumpBuffer, ResultReference = remoteFunction:InvokeServer(dumpBuffer, reference, func.id)
 
 					func.ready = true
 					func.response = {

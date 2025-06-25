@@ -71,6 +71,19 @@ local function playerAdded(player)
 	end
 end
 
+local function playerRemoving(player: Player)
+	local reliableEventCursor = perPlayerReliable[player]
+	local unreliableEventCursor = perPlayerUnreliable[player]
+
+	if reliableEventCursor ~= nil then
+		perPlayerReliable[player] = nil
+	end
+
+	if unreliableEventCursor ~= nil then
+		perPlayerUnreliable[player] = nil
+	end
+end
+
 local serverProcess = {}
 
 function serverProcess.sendAllReliable(id: number, writer: (value: any) -> (), data: { [string]: any })
@@ -124,26 +137,39 @@ function serverProcess.sendPlayerUnreliable(
 end
 
 function serverProcess.start()
+	local bindable = Instance.new("BindableEvent")
+	bindable.Name = "ByteNetMaxRemote"
+	bindable.Parent = ReplicatedStorage
+	
+	local bindableFunc = Instance.new("BindableFunction")
+	bindableFunc.Name = "ByteNetMaxQuery"
+	bindableFunc.Parent = ReplicatedStorage
+	
+	local eventsFolder = Instance.new("Folder")
+	eventsFolder.Name = "system"
+	eventsFolder.Parent = script.Parent.Parent
+	
 	local reliableRemote = Instance.new("RemoteEvent")
 	reliableRemote.Name = "ByteNetReliable"
 	reliableRemote.OnServerEvent:Connect(onServerEvent)
-	reliableRemote.Parent = ReplicatedStorage
+	reliableRemote.Parent = eventsFolder
 
 	local unreliableRemote = Instance.new("UnreliableRemoteEvent")
 	unreliableRemote.Name = "ByteNetUnreliable"
 	unreliableRemote.OnServerEvent:Connect(onServerEvent)
-	unreliableRemote.Parent = ReplicatedStorage
+	unreliableRemote.Parent = eventsFolder
 	
 	local remoteFunc = Instance.new("RemoteFunction")
 	remoteFunc.Name = "ByteNetQuery"
 	remoteFunc.OnServerInvoke = onServerInvoke
-	remoteFunc.Parent = ReplicatedStorage
+	remoteFunc.Parent = eventsFolder
 
 	for _, player in Players:GetPlayers() do
 		playerAdded(player)
 	end
 
 	Players.PlayerAdded:Connect(playerAdded)
+	Players.PlayerRemoving:Connect(playerRemoving)
 
 	RunService.Heartbeat:Connect(function()
 		-- Check if the channel has anything before trying to send it
@@ -164,20 +190,23 @@ function serverProcess.start()
 		end
 
 		for _, player in Players:GetPlayers() do
-			if perPlayerReliable[player].cursor > 0 then
-				local b, r = dump(perPlayerReliable[player])
+			local reliableEventCursor = perPlayerReliable[player]
+			local unreliableEventCursor = perPlayerUnreliable[player]
+			
+			if reliableEventCursor ~= nil and reliableEventCursor.cursor > 0 then
+				local b, r = dump(reliableEventCursor)
 				reliableRemote:FireClient(player, b, r)
 
-				perPlayerReliable[player].cursor = 0
-				table.clear(perPlayerReliable[player].references)
+				reliableEventCursor.cursor = 0
+				table.clear(reliableEventCursor.references)
 			end
 
-			if perPlayerUnreliable[player].cursor > 0 then
-				local b, r = dump(perPlayerUnreliable[player])
+			if unreliableEventCursor ~= nil and unreliableEventCursor.cursor > 0 then
+				local b, r = dump(unreliableEventCursor)
 				unreliableRemote:FireClient(player, b, r)
 
-				perPlayerUnreliable[player].cursor = 0
-				table.clear(perPlayerUnreliable[player].references)
+				unreliableEventCursor.cursor = 0
+				table.clear(unreliableEventCursor.references)
 			end
 		end
 	end)
