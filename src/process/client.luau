@@ -1,4 +1,3 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local types = require(script.Parent.Parent.types)
@@ -9,67 +8,8 @@ local alloc = bufferWriter.alloc
 local u8 = bufferWriter.u8
 local load = bufferWriter.load
 
-local waitingForResponse = false
-local MAX_BUFFER_SIZE = 4096
-local rateLimit = {
-	bytesPerSec = MAX_BUFFER_SIZE,
-	refillRate = MAX_BUFFER_SIZE,
-	lastTime = os.clock(),
-	currentBytes = MAX_BUFFER_SIZE
-}
-
 local function onClientEvent(receivedBuffer, ref)
 	read(receivedBuffer, ref)
-end
-
-local function allowedToSend(size)
-	local now = os.clock()
-	local elapsed = now - rateLimit.lastTime
-	
-	rateLimit.currentBytes = math.min(
-		rateLimit.currentBytes + (elapsed * rateLimit.refillRate),
-		rateLimit.bytesPerSec
-	)
-	rateLimit.lastTime = now
-	
-	if rateLimit.currentBytes >= size then
-		rateLimit.currentBytes -= size
-		return true
-	else
-		return false
-	end
-end
-
-local function handleBindable(dumpBuffer, reference, remote)
-	local size = buffer.len(dumpBuffer)
-	
-	if typeof(dumpBuffer) ~= "buffer" or size > MAX_BUFFER_SIZE then
-		warn(`Buffer exceeds size limit of {MAX_BUFFER_SIZE}! This event has been blocked. Edit MAX_BUFFER_SIZE in src/process/client.luau`)
-		return
-	end
-	
-	if not allowedToSend(size) then
-		warn("Rate limit exceeded!")
-		return
-	end
-	
-	remote:FireServer(dumpBuffer, reference)
-end
-
-local function handleBindableFunc(dumpBuffer, reference, id, func: RemoteFunction)
-	local size = buffer.len(dumpBuffer)
-
-	if typeof(dumpBuffer) ~= "buffer" or size > MAX_BUFFER_SIZE then
-		warn(`Buffer exceeds size limit of {MAX_BUFFER_SIZE}! This function has been blocked. Edit MAX_BUFFER_SIZE in src/process/client.luau`)
-		return
-	end
-	
-	if not allowedToSend(size) then
-		warn("Rate limit exceeded!")
-		return
-	end
-	
-	return func:InvokeServer(dumpBuffer, reference, id)
 end
 
 -- Shared with: src/process/server.luau, src/process/read.luau (Infeasible to split this into another file)
@@ -157,13 +97,7 @@ function clientProcess.invoke(id: number, requestWriter: (value: any) -> (), dat
 	return decodedData
 end
 
-function clientProcess.start()
-	local bindable: BindableEvent = ReplicatedStorage:WaitForChild("ByteNetMaxRemote")
-	bindable.Event:Connect(handleBindable)
-	
-	local bindableFunc: BindableFunction = ReplicatedStorage:WaitForChild("ByteNetMaxQuery")
-	bindableFunc.OnInvoke = handleBindableFunc
-	
+function clientProcess.start()	
 	local eventsFolder = script.Parent.Parent:WaitForChild("system")
 	
 	local reliableRemote = eventsFolder:WaitForChild("ByteNetReliable")
@@ -178,8 +112,7 @@ function clientProcess.start()
 		-- Again, checking if there's anything in the channel before we send it.
 		if reliable.cursor > 0 then
 			local b, r = dump(reliable)
-			bindable:Fire(b, r, reliableRemote)
-			--reliableRemote:FireServer(b, r)
+			reliableRemote:FireServer(b, r)
 
 			-- effectively clears the channel
 			reliable.cursor = 0
@@ -188,8 +121,7 @@ function clientProcess.start()
 
 		if unreliable.cursor > 0 then
 			local b, r = dump(unreliable)
-			bindable:Fire(b, r, unreliableRemote)
-			--unreliableRemote:FireServer(b, r)
+			unreliableRemote:FireServer(b, r)
 
 			unreliable.cursor = 0
 			table.clear(unreliable.references)
@@ -202,8 +134,7 @@ function clientProcess.start()
 
 				if (func.data.cursor > 0) then
 					local dumpBuffer, reference = dump(func.data)
-					local ResultDumpBuffer, ResultReference = bindableFunc:Invoke(dumpBuffer, reference, func.id, remoteFunction)
-					--local ResultDumpBuffer, ResultReference = remoteFunction:InvokeServer(dumpBuffer, reference, func.id)
+					local ResultDumpBuffer, ResultReference = remoteFunction:InvokeServer(dumpBuffer, reference, func.id)
 
 					func.ready = true
 					func.response = {
