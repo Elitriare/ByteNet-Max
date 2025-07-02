@@ -65,18 +65,30 @@ local function checkPlayerAllowedToSend(player: Player, size: number)
 	end
 end	
 
--- TODO handle invalid data better
-local function onServerEvent(player: Player, data, references)
-	-- Only accept buffer data
-	local dataSize = buffer.len(data)
-	
-	if not (typeof(data) == "buffer") or dataSize > MAX_BUFFER_SIZE then
-		warn("Data is not a buffer or buffer is too large. Size limit exceeded: " .. tostring(MAX_BUFFER_SIZE) .. " bytes.")
-		return
+local function verifyBuffer(player: Player, data)
+	if not (typeof(data) == "buffer") then
+		warn("Data is not a buffer.")
+		return false
 	end
-	
+
+	local dataSize = buffer.len(data)
+
+	if dataSize > MAX_BUFFER_SIZE then
+		warn("Buffer is too large. Size limit exceeded: " .. tostring(MAX_BUFFER_SIZE) .. " bytes.")
+		return false
+	end 
+
 	if not checkPlayerAllowedToSend(player, dataSize) then
 		warn("Rate limit exceeded: " .. tostring(rateLimit.bytesPerSec) .. " bytes per second.")
+		return false
+	end
+	
+	return true
+end
+
+-- TODO handle invalid data better
+local function onServerEvent(player: Player, data, references)
+	if not verifyBuffer(player, data) then
 		return
 	end
 
@@ -84,15 +96,7 @@ local function onServerEvent(player: Player, data, references)
 end
 
 local function onServerInvoke(player: Player, data, references, id: number)
-	local dataSize = buffer.len(data)
-
-	if not (typeof(data) == "buffer") or dataSize > MAX_BUFFER_SIZE then
-		warn("Data is not a buffer or buffer is too large. Size limit exceeded: " .. tostring(MAX_BUFFER_SIZE) .. " bytes.")
-		return
-	end
-	
-	if not checkPlayerAllowedToSend(player, dataSize) then
-		warn("Rate limit exceeded: " .. tostring(rateLimit.bytesPerSec) .. " bytes per second.")
+	if not verifyBuffer(player, data) then
 		return
 	end
 	
