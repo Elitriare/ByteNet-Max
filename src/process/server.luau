@@ -11,7 +11,7 @@ local alloc = bufferWriter.alloc
 local u8 = bufferWriter.u8
 local load = bufferWriter.load
 
-local MAX_BUFFER_SIZE = math.floor(script.Parent.Parent:GetAttribute("MAX_BUFFER_SIZE"))
+local MAX_BUFFER_SIZE = math.floor(script.Parent.Parent:GetAttribute("MAX_BUFFER_SIZE") or 4096)
 local rateLimit = {
 	bytesPerSec = MAX_BUFFER_SIZE,
 	refillRate = MAX_BUFFER_SIZE,
