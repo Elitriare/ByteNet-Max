@@ -1,6 +1,6 @@
 [package]
 name = "elitriare/bytenet-max"
-version = "0.2.4"
+version = "0.2.5"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
