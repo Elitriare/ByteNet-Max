@@ -55,7 +55,7 @@ local function runQueryListener(callback, listenOnce: boolean, query, ...)
 	
 	repeat
 		task.wait()
-	until result or (tick() - ts) > 10;
+	until result ~= nil or (tick() - ts) > 10;
 	
 	if result == nil then
 		warn("queryResult hung for 10 seconds, returning null.")
