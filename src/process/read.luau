@@ -50,15 +50,15 @@ local function runQueryListener(callback, listenOnce: boolean, query, ...)
 	end
 
 	task.spawn(freeThread :: thread, function(...)
-		result = callback(...)
+		result, callbackEnded = listener.Callback(...), true
 	end, ...)
 	
 	repeat
 		task.wait()
-	until result ~= nil or (tick() - ts) > 10;
+	until callbackEnded or (tick() - ts) > 10;
 	
-	if result == nil then
-		warn("queryResult hung for 10 seconds, returning null.")
+	if callbackEnded == false then
+		warn("query hung for 10 seconds or otherwise failed, returning nil.")
 	end
 	
 	if listenOnce then
