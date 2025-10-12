@@ -53,6 +53,16 @@ export type dataTypeInterface<T> = {
 	read: (b: buffer, cursor: number, references: { [number]: unknown }?) -> (T, number),
 }
 
+-- Used internally to store callbacks and their state for both packets and queries
+export type Listener<T> = {
+	Callback: (data: T, target: Player?) -> any,
+	OnceCallback: boolean
+}
+export type QueryListener<RequestType, ResponseType> = Listener<RequestType> & {
+	Callback: (data: RequestType, target: Player?) -> ResponseType,
+	Disconnecting: boolean?
+}
+
 -- Somewhat public facing: used as return result in definePacket
 type Packet<T> = {
 	sendToAll: (data: T) -> (),

@@ -29,20 +29,18 @@ local function yielder()
 	end
 end
 
-local function runListener(callback, listenOnce: boolean, packet, ...)
+local function runListener(listener, packet, ...)
 	if freeThread == nil then
 		freeThread = coroutine.create(yielder)
 		coroutine.resume(freeThread :: thread)
 	end
 
-	task.spawn(freeThread :: thread, callback, ...)
-	if listenOnce then
-		packet.disconnect(callback)
-	end
+	task.spawn(freeThread :: thread, listener.Callback, ...)
 end
 
-local function runQueryListener(callback, listenOnce: boolean, query, ...)
+local function runQueryListener(listener: types.QueryListener<any,any>, query, ...)
 	local result 
+	local callbackEnded: boolean = false
 	local ts = tick();
 	if freeThread == nil then
 		freeThread = coroutine.create(yielder)
@@ -59,10 +57,6 @@ local function runQueryListener(callback, listenOnce: boolean, query, ...)
 	
 	if callbackEnded == false then
 		warn("query hung for 10 seconds or otherwise failed, returning nil.")
-	end
-	
-	if listenOnce then
-		query.disconnect(callback)
 	end
 		
 	return result
@@ -84,6 +78,12 @@ local function dump(channel: types.channelData): (buffer, { unknown }?)
 	buffer.copy(dumpBuffer, 0, channel.buff, 0, cursor)
 
 	return dumpBuffer, if #channel.references > 0 then channel.references else nil
+end
+
+local function clearListeners(packetOrQuery, listeners: {types.Listener<any>})
+	for _, listener in listeners do
+		packetOrQuery.disconnect(listener)
+	end
 end
 
 return function(incomingBuffer: buffer, references: { [number]: unknown }?, player: Player?, readType: string?, id: number?)
@@ -125,25 +125,39 @@ return function(incomingBuffer: buffer, references: { [number]: unknown }?, play
 		
 		readCursor += valueLength
 
+		-- Triggered OnceCallback listeners to remove.
+		-- we can't remove them immediately as that causes
+		-- issues if we have multiple listeners to iterate
+		local listenersToDisconnect: {types.Listener<any>} = {}
+
 		if readType == "packet" then
 			for _, listener in readablePacketOrQuery.getListeners() do
 				if typeof(listener) == "table" then
-					runListener(listener["OnceCallback"], true, readablePacketOrQuery, value, player)
-				elseif typeof(listener) == "function" then
-					runListener(listener, false, readablePacketOrQuery, value, player)
+					runListener(listener, readablePacketOrQuery, value, player)
+
+					if listener.OnceCallback == true then
+						table.insert(listenersToDisconnect, listener)
+					end
 				else
 					error("Listener type not recognised for packet: " .. typeof(listener))
 				end
 			end
+			clearListeners(readablePacketOrQuery, listenersToDisconnect)
 		elseif readType == "query" then
 			if RunService:IsServer() then
 				for _, listener in readablePacketOrQuery.getListeners() do
 					local response 
 					
-					if typeof(listener) == "table" then
-						response = runQueryListener(listener["OnceCallback"], true, readablePacketOrQuery, value, player)
-					elseif typeof(listener) == "function" then
-						response = runQueryListener(listener, false, readablePacketOrQuery, value, player)
+					if typeof(listener) == "table" and listener.Disconnecting ~= true then
+						-- mark it as disconnecting so it doesn't get triggered twice
+						-- should the callback take a while and the packet is invoked
+						-- more than once.
+						if listener.OnceCallback == true then
+							listener.Disconnecting = true
+							table.insert(listenersToDisconnect, listener)
+						end
+
+						response = runQueryListener(listener, readablePacketOrQuery, value, player)
 					else
 						error("Listener type not recognised for query: " .. typeof(listener))
 					end
@@ -159,10 +173,13 @@ return function(incomingBuffer: buffer, references: { [number]: unknown }?, play
 										
 					if func.cursor > 0 then
 						local dumpBuffer, reference = dump(func)
-												
+
+						clearListeners(readablePacketOrQuery, listenersToDisconnect)
+						
 						return dumpBuffer, reference
 					end
-				end	
+				end
+				print('not returning ???')
 			elseif RunService:IsClient() then
 				return value
 			end
