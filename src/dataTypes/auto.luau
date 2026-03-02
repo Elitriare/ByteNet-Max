@@ -11,12 +11,10 @@ local int32 = require(script.Parent.int32)()
 local float32 = require(script.Parent.float32)()
 local float64 = require(script.Parent.float64)()
 local stringType = require(script.Parent.string)()
-local buff = require(script.Parent.buff)()
 local vec2 = require(script.Parent.vec2)()
 local vec3 = require(script.Parent.vec3)()
 local color3 = require(script.Parent.color3)()
 local cframe = require(script.Parent.cframe)()
-local inst = require(script.Parent.inst)()
 local unknown = require(script.Parent.unknown)()
 
 local writeU8 = bufferWriter.u8
@@ -233,18 +231,6 @@ local orderedCodecs: { codec } = {
 		end,
 	},
 	{
-		id = 11,
-		matches = function(value)
-			return typeof(value) == "buffer"
-		end,
-		read = function(b, cursor)
-			return buff.read(b, cursor)
-		end,
-		write = function(value)
-			buff.write(value :: buffer)
-		end,
-	},
-	{
 		id = 12,
 		matches = function(value)
 			return typeof(value) == "Vector2"
@@ -290,18 +276,6 @@ local orderedCodecs: { codec } = {
 		end,
 		write = function(value)
 			cframe.write(value :: CFrame)
-		end,
-	},
-	{
-		id = 16,
-		matches = function(value)
-			return typeof(value) == "Instance"
-		end,
-		read = function(b, cursor)
-			return inst.read(b, cursor)
-		end,
-		write = function(value)
-			inst.write(value :: Instance)
 		end,
 	},
 	{

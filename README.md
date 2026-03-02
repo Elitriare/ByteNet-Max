@@ -182,7 +182,7 @@ AutoDemo.packets.DebugValue.send(Vector3.new(1, 2, 3))
 AutoDemo.packets.DebugValue.send(nil)
 ```
 
-`auto` currently supports: `nil`, `boolean`, `number`, `string`, `buffer`, `Vector2`, `Vector3`, `Color3`, `CFrame`, `Instance` (and falls back to unknown/reference behavior for other values).
+`auto` currently supports: `nil`, `boolean`, `number`, `string`, `Vector2`, `Vector3`, `Color3`, `CFrame` (and falls back to unknown/reference behavior for values like `Instance`, `buffer`, and custom userdata).
 
 Packets & Queries can co-exist under the same namespace, just make sure you define the packets and queries table in defineNamespace. If you don't require packets, you can leave it out and just define the queries table, and vice versa.
 
