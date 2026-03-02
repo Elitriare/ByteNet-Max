@@ -8,7 +8,7 @@ local client = require(script.Parent.Parent.process.client)
 local moduleRunContext: "server" | "client" = if RunService:IsServer() then "server" else "client"
 
 return function(properties: types.queryProperties<types.dataTypeInterface<any>, types.dataTypeInterface<any>>, id: number)
-	local listeners = {}
+	local listeners: {types.QueryListener<any, any>} = {}
 	
 	local clientInvokeFunction: (id: number, requestWriter: (value: any) -> (), data: any) -> any = client.invoke
 	
@@ -28,26 +28,28 @@ return function(properties: types.queryProperties<types.dataTypeInterface<any>, 
 	end
 	
 	function exported.wait()
-		local index: number
-		
+		-- use a OnceCallback for this still
 		local runningThread = coroutine.running()
-		table.insert(listeners, function(data, player)
-			print(data)
-			task.spawn(runningThread, data, player)
-			
-			table.remove(listeners, index)
-		end)
-		
-		index = #listeners
+		table.insert(listeners, {
+			Callback = function(data, player)
+				print(data)
+				task.spawn(runningThread, data, player)
+			end,
+			OnceCallback = true
+		})
 		
 		return coroutine.yield()
 	end
 	
 	function exported.listen(callback)
-		table.insert(listeners, callback)
-		
+		local listener = {
+			Callback = callback,
+			OnceCallback = false	
+		}
+		table.insert(listeners, listener)
+
 		return function()
-			exported.disconnect(callback)
+			exported.disconnect(listener)
 		end
 	end
 	
@@ -55,14 +57,26 @@ return function(properties: types.queryProperties<types.dataTypeInterface<any>, 
 		table.clear(listeners)
 	end
 	
-	function exported.disconnect(callback)
-		table.remove(listeners, table.find(listeners, callback))
+	function exported.disconnect(listener)
+		-- Ensure the index isn't nil to avoid removing arbitrary listeners
+		local index = table.find(listeners, listener)
+		if index ~= nil then
+			table.remove(listeners, index)
+		else
+			warn('Query listener was already disconnected.')
+		end
 	end
 	
 	function exported.listenOnce(callback)
-		table.insert(listeners, {
-			["OnceCallback"] = callback	
-		})
+		local listener = {
+			Callback = callback,
+			OnceCallback = true	
+		}
+		table.insert(listeners, listener)
+
+		return function()
+			exported.disconnect(listener)
+		end
 	end
 	
 	function exported.getListeners()

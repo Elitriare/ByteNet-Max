@@ -16,7 +16,7 @@ local moduleRunContext: "server" | "client" = if RunService:IsServer() then "ser
 return function(props: types.packetProps<types.dataTypeInterface<any>>, id: number)
 	-- Basic properties: reliability type, "unique" which is used to get the packet ID, and set up listeners
 	local reliabilityType = props.reliabilityType or "reliable"
-	local listeners = {}
+	local listeners: {types.Listener<any>} = {} 
 
 	local serverSendFunction: (player: Player, id: number, writer: (value: any) -> (), data: any) -> () = if reliabilityType
 			== "reliable"
@@ -84,29 +84,29 @@ return function(props: types.packetProps<types.dataTypeInterface<any>>, id: numb
 	end
 
 	function exported.wait()
-		-- define it up here so we can use it to disconnect
-		local index: number
-
+		-- use a OnceCallback to resume the thread
 		local runningThread = coroutine.running()
-		table.insert(listeners, function(data, player)
-			task.spawn(runningThread, data, player)
+		table.insert(listeners, { 
+			Callback  = function(data, player)
+				task.spawn(runningThread, data, player)
+			end,
+			OnceCallback = true
+		})
 
-			-- Disconnects the listener
-			table.remove(listeners, index)
-		end)
-
-		-- we connected, time to set the index for when we need to disconnect.
-		index = #listeners
 
 		-- the listener will resume the thread
 		return coroutine.yield()
 	end
 
 	function exported.listen(callback)
-		table.insert(listeners, callback)
+		local listener = {
+			Callback = callback,
+			OnceCallback = false
+		}
+		table.insert(listeners, listener)
 		
 		return function()
-			exported.disconnect(callback)
+			exported.disconnect(listener)
 		end
 	end
 	
@@ -114,14 +114,26 @@ return function(props: types.packetProps<types.dataTypeInterface<any>>, id: numb
 		table.clear(listeners)
 	end
 	
-	function exported.disconnect(callback)
-		table.remove(listeners, table.find(listeners, callback))
+	function exported.disconnect(listener)
+		-- Ensure the index isn't nil to avoid removing arbitrary listeners
+		local index = table.find(listeners, listener)
+		if index ~= nil then
+			table.remove(listeners, index)
+		else
+			warn('Packet listener was already disconnected.')
+		end
 	end
 	
 	function exported.listenOnce(callback)
-		table.insert(listeners, {
-			["OnceCallback"] = callback	
-		})
+		local listener =  {
+			Callback = callback,
+			OnceCallback = true	
+		}
+		table.insert(listeners, listener)
+
+		return function()
+			exported.disconnect(listener)
+		end
 	end
 	
 	function exported.getListeners()
