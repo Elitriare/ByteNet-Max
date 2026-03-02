@@ -8,7 +8,7 @@ local alloc = bufferWriter.alloc
 return function(): types.dataTypeInterface<Instance?>
 	return {
 		write = function(value)
-			alloc(1)
+			alloc(2)
 			reference(value)
 		end,
 
@@ -16,15 +16,15 @@ return function(): types.dataTypeInterface<Instance?>
 			local refs = readRefs.get()
 
 			if not refs then
-				return nil, 1
+				return nil, 2
 			end
 
-			local ref = refs[buffer.readu8(b, cursor)]
+			local ref = refs[buffer.readu16(b, cursor)]
 
 			if typeof(ref) == "Instance" then
-				return ref, 1
+				return ref, 2
 			else
-				return nil, 1
+				return nil, 2
 			end
 		end,
 	}

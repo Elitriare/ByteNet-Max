@@ -1,11 +1,9 @@
 --!native
 --!optimize 2
-local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local types = require(script.Parent.Parent.types)
 local client = require(script.Parent.Parent.process.client)
-local server = require(script.Parent.Parent.process.server)
 
 local moduleRunContext: "server" | "client" = if RunService:IsServer() then "server" else "client"
 
@@ -15,7 +13,6 @@ return function(properties: types.queryProperties<types.dataTypeInterface<any>, 
 	local clientInvokeFunction: (id: number, requestWriter: (value: any) -> (), data: any) -> any = client.invoke
 	
 	local requestWriter = properties.request.write
-	local responseWriter = properties.response.write
 	
 	local exported = {}
 	exported.requestReader = properties.request.read

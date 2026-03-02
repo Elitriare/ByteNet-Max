@@ -8,7 +8,7 @@ local alloc = bufferWriter.alloc
 return function(): types.dataTypeInterface<unknown>
 	return {
 		write = function(value: unknown)
-			alloc(1)
+			alloc(2)
 			reference(value)
 		end,
 
@@ -16,10 +16,10 @@ return function(): types.dataTypeInterface<unknown>
 			local refs = readRefs.get()
 
 			if not refs then
-				return nil, 1
+				return nil, 2
 			end
 
-			return refs[buffer.readu8(b, cursor)], 1
+			return refs[buffer.readu16(b, cursor)], 2
 		end,
 	}
 end

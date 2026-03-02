@@ -75,8 +75,8 @@ function bufferWriter.reference(value: any)
 	table.insert(references, value)
 	local index = #references
 
-	buffer.writeu8(buff, cursor, index)
-	cursor += 1
+	buffer.writeu16(buff, cursor, index)
+	cursor += 2
 end
 
 function bufferWriter.u16(value: number)
