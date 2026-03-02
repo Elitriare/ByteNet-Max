@@ -1,6 +1,7 @@
 local RunService = game:GetService("RunService")
 
 local clientProcess = require(script.process.client)
+local auto = require(script.dataTypes.auto)
 local array = require(script.dataTypes.array)
 local bool = require(script.dataTypes.bool)
 local buff = require(script.dataTypes.buff)
@@ -43,6 +44,7 @@ local t = {
 	defineQuery = defineQuery,
 	defineNamespace = namespace,
 
+	auto = auto(),
 	array = array,
 	bool = bool(),
 	optional = optional,
@@ -65,12 +67,10 @@ local t = {
 	inst = inst(),
 	unknown = unknown(),
 	nothing = nothing(),
-	
+
 	-- MASK TYPES
 	playerName = string(),
 	playerIdentifier = uint8(),
 }
 
-return (
-	table.freeze(t) :: any
-) :: types.ByteNet
+return (table.freeze(t) :: any) :: types.ByteNet

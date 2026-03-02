@@ -34,7 +34,7 @@ end
 
 local reliable: types.channelData = create()
 local unreliable: types.channelData = create()
-local funcs: {types.remoteFunctionChannel} = {}
+local funcs: { types.remoteFunctionChannel } = {}
 
 local clientProcess = {}
 
@@ -58,7 +58,7 @@ function clientProcess.sendUnreliable(id: number, writer: (value: any) -> (), da
 	unreliable = bufferWriter.export()
 end
 
-function clientProcess.invoke(id: number, requestWriter: (value: any) -> (), data: {[string]: any}): any
+function clientProcess.invoke(id: number, requestWriter: (value: any) -> (), data: { [string]: any }): any
 	local func = create()
 	func = load(func)
 
@@ -72,7 +72,7 @@ function clientProcess.invoke(id: number, requestWriter: (value: any) -> (), dat
 		ready = false,
 		response = {},
 		data = func,
-		id = id
+		id = id,
 	}
 
 	table.insert(funcs, result)
@@ -81,7 +81,7 @@ function clientProcess.invoke(id: number, requestWriter: (value: any) -> (), dat
 
 	task.spawn(function()
 		while true do
-			if (result.ready) then
+			if result.ready then
 				coroutine.resume(waitingForResponse)
 				break
 			end
@@ -91,15 +91,15 @@ function clientProcess.invoke(id: number, requestWriter: (value: any) -> (), dat
 	end)
 
 	coroutine.yield()
-		
+
 	local decodedData = read(result.response.dumpBuffer, result.response.reference, nil, "query")
 
 	return decodedData
 end
 
-function clientProcess.start()	
+function clientProcess.start()
 	local eventsFolder = script.Parent.Parent:WaitForChild("system")
-	
+
 	local reliableRemote = eventsFolder:WaitForChild("ByteNetReliable")
 	reliableRemote.OnClientEvent:Connect(onClientEvent)
 
@@ -127,19 +127,20 @@ function clientProcess.start()
 			table.clear(unreliable.references)
 		end
 
-		for i=#funcs,1,-1 do
+		for i = #funcs, 1, -1 do
 			task.spawn(function()
 				local func = funcs[i]
 				table.remove(funcs, i)
 
-				if (func.data.cursor > 0) then
+				if func.data.cursor > 0 then
 					local dumpBuffer, reference = dump(func.data)
-					local ResultDumpBuffer, ResultReference = remoteFunction:InvokeServer(dumpBuffer, reference, func.id)
+					local ResultDumpBuffer, ResultReference =
+						remoteFunction:InvokeServer(dumpBuffer, reference, func.id)
 
 					func.ready = true
 					func.response = {
 						dumpBuffer = ResultDumpBuffer,
-						reference = ResultReference
+						reference = ResultReference,
 					}
 
 					func.data.cursor = 0
