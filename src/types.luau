@@ -28,11 +28,11 @@ export type queryProperties<RequestType, ResponseType> = {
 	response: ResponseType,
 	callbackBehavior: {
 		spawnThread: boolean,
-		allowMultiple: boolean
-	}?
+		allowMultiple: boolean,
+	}?,
 }
 
--- Used internally for packet & query request/response queues 
+-- Used internally for packet & query request/response queues
 export type channelData = {
 	cursor: number,
 	size: number,
@@ -41,10 +41,10 @@ export type channelData = {
 }
 
 export type remoteFunctionChannel = {
-	ready: boolean, 
-	response: any?, 
+	ready: boolean,
+	response: any?,
 	data: channelData,
-	id: number
+	id: number,
 }
 
 -- Used internally for serializing and deserializing all data types
@@ -63,7 +63,7 @@ type Packet<T> = {
 	send: (data: T, target: Player?) -> (),
 	listen: (callback: (data: T, player: Player?) -> ()) -> (),
 	listenOnce: (callback: (data: T, player: Player?) -> ()) -> (),
-	disconnectAll: () -> ()
+	disconnectAll: () -> (),
 }
 
 -- used as return result in defineQuery
@@ -71,15 +71,18 @@ type Query<RequestType, ResponseType> = {
 	invoke: (request: RequestType, target: Player?) -> ResponseType,
 	listen: (callback: (request: RequestType, player: Player?) -> ResponseType) -> (),
 	listenOnce: (callback: (request: RequestType, player: Player?) -> ResponseType) -> (),
-	disconnectAll: () -> ()
+	disconnectAll: () -> (),
 }
 
 -- Library type
 export type ByteNet = {
 	definePacket: <T>(props: packetProps<T>) -> Packet<T>,
-	defineQuery: <RequestType, ResponseType>(properties: queryProperties<RequestType, ResponseType>) -> Query<RequestType, ResponseType>,
+	defineQuery: <RequestType, ResponseType>(
+		properties: queryProperties<RequestType, ResponseType>
+	) -> Query<RequestType, ResponseType>,
 	defineNamespace: <T>(name: string, namespace: () -> namespaceData & T) -> T,
 
+	auto: unknown,
 	struct: <T>(format: T) -> T,
 	bool: boolean,
 	array: <T>(value: T) -> { [number]: T },

@@ -144,6 +144,46 @@ The above function works with **packets** too!
 
 It's that simple!
 
+<h3><b>Auto dataType (easy mode)</b></h3>
+
+`ByteNetMax.auto` is a flexible dataType for when you just want to send something quickly without deciding the exact type first.
+
+It writes a 1-byte type marker, then automatically picks a compact serializer for the value you pass.
+
+That means numbers use the smallest fitting numeric format (for example uint8/int8/int16/etc) when possible.
+
+**Good for:** quick prototypes, mixed payloads, and newer developers getting started.
+
+**Best practice:** if your payload shape is fixed, `struct(...)` with explicit field types is still ideal.
+
+Example packet using `auto`:
+```lua
+local ByteNetMax = require(path.to.ByteNetMax)
+
+return ByteNetMax.defineNamespace("AutoDemo", function()
+	return {
+		packets = {
+			DebugValue = ByteNetMax.definePacket({
+				value = ByteNetMax.auto,
+			}),
+		},
+	}
+end)
+```
+
+Example sends:
+```lua
+local AutoDemo = require(path.to.AutoDemo)
+
+AutoDemo.packets.DebugValue.send(123)
+AutoDemo.packets.DebugValue.send("hello")
+AutoDemo.packets.DebugValue.send(true)
+AutoDemo.packets.DebugValue.send(Vector3.new(1, 2, 3))
+AutoDemo.packets.DebugValue.send(nil)
+```
+
+`auto` currently supports: `nil`, `boolean`, `number`, `string`, `buffer`, `Vector2`, `Vector3`, `Color3`, `CFrame`, `Instance` (and falls back to unknown/reference behavior for other values).
+
 Packets & Queries can co-exist under the same namespace, just make sure you define the packets and queries table in defineNamespace. If you don't require packets, you can leave it out and just define the queries table, and vice versa.
 
 <b>IMPORTANT:</b> <u><b><i>You must require the ModuleScript you created on both the server and client! This is to initialise server side & client side dependencies for a secure network.</b></i></u>
