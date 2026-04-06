@@ -191,21 +191,21 @@ function serverProcess.sendPlayerUnreliable(
 end
 
 function serverProcess.start()	
-	local eventsFolder = Instance.new("Folder")
+	local eventsFolder = script.Parent.Parent:FindFirstChild("system") or Instance.new("Folder")
 	eventsFolder.Name = "system"
 	eventsFolder.Parent = script.Parent.Parent
 	
-	local reliableRemote = Instance.new("RemoteEvent")
+	local reliableRemote = eventsFolder:FindFirstChild("ByteNetReliable") or Instance.new("RemoteEvent")
 	reliableRemote.Name = "ByteNetReliable"
 	reliableRemote.OnServerEvent:Connect(onServerEvent)
 	reliableRemote.Parent = eventsFolder
 
-	local unreliableRemote = Instance.new("UnreliableRemoteEvent")
+	local unreliableRemote = eventsFolder:FindFirstChild("ByteNetUnreliable") or Instance.new("UnreliableRemoteEvent")
 	unreliableRemote.Name = "ByteNetUnreliable"
 	unreliableRemote.OnServerEvent:Connect(onServerEvent)
 	unreliableRemote.Parent = eventsFolder
 	
-	local remoteFunc = Instance.new("RemoteFunction")
+	local remoteFunc = eventsFolder:FindFirstChild("ByteNetQuery") or Instance.new("RemoteFunction")
 	remoteFunc.Name = "ByteNetQuery"
 	remoteFunc.OnServerInvoke = onServerInvoke
 	remoteFunc.Parent = eventsFolder
