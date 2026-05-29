@@ -58,6 +58,17 @@ function bufferWriter.u8NoAlloc(value: number)
 	cursor += 1
 end
 
+function bufferWriter.playerIdentifier(value: Player)
+	for _, objvalue : ObjectValue in script.Parent.Parent.playerIdentifier:GetChildren() do
+		if objvalue.Value == value then
+			alloc(1)
+			buffer.writeu8(buff, cursor, tonumber(objvalue.Name))
+			cursor += 1
+			break
+		end
+	end
+end
+
 function bufferWriter.u8(value: number)
 	alloc(1)
 	buffer.writeu8(buff, cursor, value)
