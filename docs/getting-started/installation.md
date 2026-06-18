@@ -53,6 +53,9 @@ StarterPlayer
 
 Both runtime sides must require `Network.luau`. The server should initialize its networking code during startup so namespace metadata exists before the client reads it.
 
+!!! danger "Installation is not complete until both sides initialize"
+    Requiring only the server code or only the client code is not enough. ByteNet Max needs the same shared namespace module on both sides to establish matching network mappings. Follow [Required initialization](initialization.md) before sending anything.
+
 ## Next step
 
-[Create your first packet](first-packet.md){ .md-button .md-button--primary }
+[Set up both runtime sides](initialization.md){ .md-button .md-button--primary }

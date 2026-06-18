@@ -46,7 +46,7 @@ Explicit types are usually smaller and clearer than `auto`.
 
 ## Shared initialization
 
-The namespace definition must run on both the server and client. Sharing a single ModuleScript prevents the two sides from drifting apart.
+The namespace definition must run on both the server and client, with the server initializing first. Sharing a single ModuleScript prevents the two sides from drifting apart. Follow the [required initialization guide](initialization.md) for the exact layout.
 
 ```mermaid
 flowchart LR
@@ -55,6 +55,8 @@ flowchart LR
     S --> M["Server publishes ID and struct metadata"]
     M --> C
 ```
+
+If a namespace contains packets, its callback must return a `packets` table. If it contains queries, it must return a `queries` table. Return both when the namespace uses both primitives.
 
 ## Server authority
 

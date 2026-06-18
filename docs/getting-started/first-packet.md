@@ -2,6 +2,9 @@
 
 A packet is a one-way message. In this example, the client tells the server which action it requested.
 
+!!! important "Before you start"
+    Complete [Required initialization](initialization.md) first. Your shared namespace module must be required on both the server and client.
+
 ## 1. Define it once
 
 Create a shared ModuleScript:
@@ -24,6 +27,8 @@ end)
 ```
 
 `value` is the packet's schema. Sending anything that does not match this shape can fail during serialization.
+
+Because this packet uses `struct`, send a dictionary whose field names match the schema. `{ Action = "Dash" }` is correct; `{ "Dash" }` is not.
 
 ## 2. Listen on the server
 

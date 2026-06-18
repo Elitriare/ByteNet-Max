@@ -27,6 +27,9 @@ Check the [Wally package](https://wally.run/package/elitriare/bytenet-max) for t
 
 ## Minimal example
 
+> [!IMPORTANT]
+> The shared namespace ModuleScript must be required on both the server and client, with the server initializing first. See [Required initialization](https://elitriare.github.io/ByteNet-Max/getting-started/initialization/).
+
 Define networking once in a shared ModuleScript:
 
 ```lua

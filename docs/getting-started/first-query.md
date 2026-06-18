@@ -2,6 +2,9 @@
 
 A query is a client-to-server request that returns a response. Use it when the caller cannot continue without a server result.
 
+!!! important "Before you start"
+    Complete [Required initialization](initialization.md) first. Your shared namespace module must be required on both the server and client.
+
 ## 1. Define request and response types
 
 ```lua title="ReplicatedStorage/Network.luau"
