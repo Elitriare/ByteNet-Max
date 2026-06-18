@@ -39,5 +39,5 @@ end)
 
 The empty tables are optional. A packet-only namespace may omit `queries`, and a query-only namespace may omit `packets`.
 
-!!! important
-    Define a namespace in one shared ModuleScript and require that module on both server and client. Do not maintain two hand-written copies of the schema.
+!!! danger "Both sides are mandatory"
+    Define a namespace in one shared ModuleScript, initialize it on the server first, and require the exact same module on the client. Do not maintain two hand-written copies of the schema. See [Required initialization](../getting-started/initialization.md).

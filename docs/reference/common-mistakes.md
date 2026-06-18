@@ -4,7 +4,36 @@
 
 **Cause:** The server has not required the shared namespace module, or the client is using a different definition.
 
-**Fix:** Put the definition in `ReplicatedStorage` and require the same ModuleScript during both server and client startup.
+**Fix:** Put the definition in `ReplicatedStorage`, initialize it on the server first, and require the exact same ModuleScript during client startup. Follow [Required initialization](../getting-started/initialization.md).
+
+## A packet/query ID is invalid or unreadable
+
+This usually indicates one of three problems:
+
+1. The namespace was not initialized on both server and client.
+2. The two runtimes loaded different definitions or package versions.
+3. The payload does not match the declared schema.
+
+Verify shared initialization before debugging individual sends.
+
+## A struct arrives incorrectly
+
+`struct` values are dictionaries, not positional arrays. Match every declared field name:
+
+```lua
+-- Schema
+ByteNetMax.struct({ Message = ByteNetMax.string })
+
+-- Correct
+Packet.send({ Message = "Hello" })
+
+-- Incorrect
+Packet.send({ "Hello" })
+```
+
+## Packets or queries are missing from the namespace
+
+Return a `packets` table when defining packets and a `queries` table when defining queries. Return both when using both.
 
 ## `send` errors on the server
 
@@ -36,6 +65,10 @@ Use one active server handler per query.
 ## Values wrap or lose precision
 
 The schema is too narrow. Check numeric ranges and remember that `Color3` uses 8-bit channels while vectors and CFrames use float32 components.
+
+## Can I send functions?
+
+No. Roblox remotes cannot transmit functions. Send data that identifies the action, then map that identifier to trusted code on the receiving side.
 
 ## `disconnectAll` removed another system's listener
 

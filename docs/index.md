@@ -11,6 +11,16 @@ ByteNet Max is a typed, buffer-based networking library for Roblox. Define each 
 [Build your first packet](getting-started/first-packet.md){ .md-button .md-button--primary }
 [Install ByteNet Max](getting-started/installation.md){ .md-button }
 
+<div class="critical-setup" markdown>
+
+### :material-connection: Required: initialize on the server **and** client
+
+The same shared namespace ModuleScript must be required by a server Script and a LocalScript. The server should initialize first. Without both sides, ByteNet Max cannot establish matching packet, query, and struct mappings, and networking will fail.
+
+[See the required setup →](getting-started/initialization.md)
+
+</div>
+
 <div class="feature-grid" markdown>
 
 <div class="feature-card" markdown>
@@ -93,8 +103,8 @@ local Coins = Network.queries.GetCoins.invoke(nil)
 print(`You have {Coins} coins`)
 ```
 
-!!! important "Require the shared definition on both sides"
-    The server and client must both require the same namespace ModuleScript. Put that module somewhere shared, normally `ReplicatedStorage`, and initialize it from a server Script and a LocalScript.
+!!! danger "Do not skip network initialization"
+    The server and client must both require the same namespace ModuleScript. Put it in `ReplicatedStorage`, require it from a server Script first, and require it again from a LocalScript. [See the exact setup](getting-started/initialization.md).
 
 ## Pick the right tool
 
