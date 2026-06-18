@@ -1,217 +1,68 @@
-<div align="center"><h1><b>ByteNet Max</b></h1></div>
-<div align="center"><h2><b>An upgraded buffer-based networking system</b></h2></div>
-<div align="center"><a href="https://github.com/Elitriare/ByteNet-Max">GitHub</a> | <a href="https://wally.run/package/elitriare/bytenet-max?version=0.2.1">Wally</a> | <a href="https://create.roblox.com/store/asset/81428213632345/ByteNet-Max">Roblox Creator Store</a></div>
+<div align="center">
 
-ByteNet Max is an upgraded version of @ffrostfall's [ByteNet](https://devforum.roblox.com/t/bytenet-advanced-networking-library-w-buffer-serialization-strict-luau-absurd-optimization-and-rbxts-support-043/2733365) which relies on strict type-checking to serialise your data into buffers before deserialising it on the other end, feeding it back to your Luau code. But what makes ByteNet Max different from ByteNet? ByteNet Max supports queries (RemoteFunctions) which are client to server requests for data. This brings you an extremely optimised experience for RemoteFunctions, using minimal data to increase send and receive speeds. ByteNet Max lives up to ByteNet's idea of making networking simple, easy and quick. The API is simple and minimalistic, helping you grasp the concepts of ByteNet Max pretty quickly!
+# ByteNet Max
 
-<h3><b>Installation</b></h3> 
+Typed, buffer-based networking for Roblox—with packets for events and queries for request/response calls.
 
-Get [ByteNet Max](https://create.roblox.com/store/asset/81428213632345/ByteNet-Max) on the Roblox Creator Store, or on [Wally](https://wally.run/package/elitriare/bytenet-max?version=0.2.1) **(WARNING: v1.0.0 is the FIRST version of ByteNet Max, due to an error I made. The latest version is always the one shown on the title of this post)**!
+[Documentation](https://elitriare.github.io/ByteNet-Max/) · [Wally](https://wally.run/package/elitriare/bytenet-max) · [Creator Store](https://create.roblox.com/store/asset/81428213632345/ByteNet-Max)
 
-<h3><b>Performance</b></h3> 
+</div>
 
-ByteNet Max lives up to the standards of ByteNet, performing incredibly well compared to other networking libraries such as BridgeNet2. The conversion to a buffer reduces memory usage significantly, helping optimise and speed up data transfer.
+## What it provides
 
-<h3><b>Documentation</b></h3> 
+- Typed buffer serialization for compact network payloads
+- Reliable and unreliable packets
+- Client-to-server queries with typed responses
+- Frame-batched packet traffic
+- Composable schemas for Roblox and Luau values
 
-ByteNet Max follows the same architecture as ByteNet, hence the documentation for RemoteEvents (packets) is the exact same and can be found here: [Documentation](https://ffrostfall.github.io/ByteNet/api/functions/definePacket/).
+## Install with Wally
 
- **Due to ByteNet documentation being outdated, here is a simple setup guide for a remote event.**
+```toml
+[dependencies]
+ByteNetMax = "elitriare/bytenet-max@0.2.7"
+```
 
+Check the [Wally package](https://wally.run/package/elitriare/bytenet-max) for the latest published version.
 
-**Packets ModuleScript:**
-Create a ModuleScript that will hold your namespaces.
+## Minimal example
+
+Define networking once in a shared ModuleScript:
+
 ```lua
-local ByteNetMax = require(path.to.ByteNetMax)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ByteNetMax = require(ReplicatedStorage.Packages.ByteNetMax)
 
-return ByteNetMax.defineNamespace("Main", function()
+return ByteNetMax.defineNamespace("Game", function()
 	return {
 		packets = {
-
-			Test = ByteNetMax.definePacket({
-				value = ByteNetMax.struct({
-					Action = ByteNetMax.string,
-					Data = ByteNetMax.string
-				}),
-			})
-		}
-	}
-
-end)
-```
-
-**Server listener:**
-Create a simple script to listen to this event, and prints out what the client sent.
-```lua
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local BytePackets = require(path.to.Packets_ModuleScript)
-
-
-BytePackets.packets.Test.listen(function(data, plr)
-	
-	-- prints the action
-	print(data.Action)
-	
-	-- prints some other data
-	print(data.Data)
-	
-	
-end)
-```
-
-**Localscript that sends information:**
-This is just a simple script that sends over your input to the server.
-```lua
-local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local BytePackets = require(path.to.Packets_ModuleScript)
-
-UserInputService.InputBegan:Connect(function(Input, gameProcessed)
-	
-	if gameProcessed or Input.KeyCode.Name == "Unknown" then return end
-	
-	
-	BytePackets.packets.Test.send({
-		Action = Input.KeyCode.Name,
-		Data = 'Whatever data you want to go along with the action here'
-	})
-	
-end)
-```
-
-<h3><b>Max-specific Documentation</b></h3> 
-
-
-However, it adds a new system named **queries**. This is the ByteNet equivalent of a RemoteFunction. To begin, you can create a ModuleScript to define a namespace under which your packets and queries will be held:
-```lua
-local ByteNetMax = require(path.to.ByteNetMax)
-
-return ByteNetMax.defineNamespace("PlayerData", function()
-    return {
-       packets = {}, -- not necessary to include this table if there's no values in it.
-       queries = {
+			Announcement = ByteNetMax.definePacket({
+				value = ByteNetMax.string,
+			}),
+		},
+		queries = {
 			GetCoins = ByteNetMax.defineQuery({
-				request = ByteNetMax.struct({
-					message = ByteNetMax.string
-				}),
-				response = ByteNetMax.struct({
-					coins = ByteNetMax.uint8
-				})
-			})
-		},		
-    }
-end)
-```
-
-Then, in a local script, you can invoke the query like so:
-```lua
-local QueryModule = require(path.to.QueryModule)
-
-local Coins = QueryModule.queries.GetCoins.invoke({
-	message = "Can I please get the coins value?"
-})
-
-print(Coins)
-```
-
-In a server script, you can receive the query and return the appropriate information, like so:
-```lua
-local QueryModule = require(path.to.QueryModule)
-
-QueryModule.queries.GetCoins.listen(function(data, player)	
-    print(data.message) -- prints "Can I please get the coins value?"
-	return {coins = player.leaderstats.Coins.Value}
-end)
-```
-
-If you want to disconnect the listener in the future, you can assign the function to a variable:
-```lua
-local QueryModule = require(path.to.QueryModule)
-local Listener 
-
-Listener = QueryModule.queries.GetCoins.listen(function(data, player)	
-    print(data.message) -- prints "Can I please get the coins value?"
-	return {coins = player.leaderstats.Coins.Value}
-end)
-
-Listener() -- disconnects listener
-```
-
-The above function works with **packets** too!
-
-It's that simple!
-
-<h3><b>Auto dataType (easy mode)</b></h3>
-
-`ByteNetMax.auto` is a flexible dataType for when you just want to send something quickly without deciding the exact type first.
-
-It writes a 1-byte type marker, then automatically picks a compact serializer for the value you pass.
-
-That means numbers use the smallest fitting numeric format (for example uint8/int8/int16/etc) when possible.
-
-**Good for:** quick prototypes, mixed payloads, and newer developers getting started.
-
-**Best practice:** if your payload shape is fixed, `struct(...)` with explicit field types is still ideal.
-
-Example packet using `auto`:
-```lua
-local ByteNetMax = require(path.to.ByteNetMax)
-
-return ByteNetMax.defineNamespace("AutoDemo", function()
-	return {
-		packets = {
-			DebugValue = ByteNetMax.definePacket({
-				value = ByteNetMax.auto,
+				request = ByteNetMax.nothing,
+				response = ByteNetMax.uint32,
 			}),
 		},
 	}
 end)
 ```
 
-Example sends:
-```lua
-local AutoDemo = require(path.to.AutoDemo)
+Require that shared module on both the server and client. See the [getting started guide](https://elitriare.github.io/ByteNet-Max/getting-started/installation/) for the complete setup.
 
-AutoDemo.packets.DebugValue.send(123)
-AutoDemo.packets.DebugValue.send("hello")
-AutoDemo.packets.DebugValue.send(true)
-AutoDemo.packets.DebugValue.send(Vector3.new(1, 2, 3))
-AutoDemo.packets.DebugValue.send(nil)
-```
+## Documentation
 
-`auto` currently supports: `nil`, `boolean`, `number`, `string`, `Vector2`, `Vector3`, `Color3`, `CFrame` (and falls back to unknown/reference behavior for values like `Instance`, `buffer`, and custom userdata).
+The dedicated documentation covers:
 
-Packets & Queries can co-exist under the same namespace, just make sure you define the packets and queries table in defineNamespace. If you don't require packets, you can leave it out and just define the queries table, and vice versa.
+- [Your first packet](https://elitriare.github.io/ByteNet-Max/getting-started/first-packet/)
+- [Your first query](https://elitriare.github.io/ByteNet-Max/getting-started/first-query/)
+- [Packet API](https://elitriare.github.io/ByteNet-Max/api/packet/)
+- [Query API](https://elitriare.github.io/ByteNet-Max/api/query/)
+- [Data types](https://elitriare.github.io/ByteNet-Max/api/data-types/)
+- [Security and limits](https://elitriare.github.io/ByteNet-Max/guides/security/)
 
-<b>IMPORTANT:</b> <u><b><i>You must require the ModuleScript you created on both the server and client! This is to initialise server side & client side dependencies for a secure network.</b></i></u>
+## License
 
-<h2>Some extra functions</h2>
-
-ByteNet Max also adds extra functions for both packets & queries for better control over your code. You can now use .listenOnce() and .disconnectAll() to call a function once or disable all callbacks connected to a packet/query (equivalent to the :Disconnect() and :Once() functions from Roblox)
-
-Using the example above, .listenOnce() is used the same way as .listen() : 
-```lua
-local QueryModule = require(path.to.QueryModule)
-
-QueryModule.queries.GetCoins.listenOnce(function(data, player)	 -- this callback only runs once, before disconnecting.
-    print(data.message) -- prints "Can I please get the coins value?"
-	return {coins = player.leaderstats.Coins.Value}
-end)
-```
-
-The .disconnectAll() function can be used to completely erase every callback created through .listen():
-```lua
-local QueryModule = require(path.to.QueryModule)
-
-QueryModule.queries.GetCoins.disconnectAll() -- disconnects all callbacks
-```
-
-
-<h3><b>Contact</b></h3> 
-
-Contact me on [Twitter](https://x.com/Elitriare) or Discord (username: elitriare), or just on this thread to report bugs or request features. I haven't fully tested this across different types of experiences, so your ***feedback*** is extremely useful!
-
-This project is open-source.
+ByteNet Max is available under the [MIT License](LICENSE).
