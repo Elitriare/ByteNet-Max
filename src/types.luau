@@ -117,7 +117,7 @@ export type ByteNet = {
 	map: <K, V>(key: K, value: V) -> { [K]: V },
 
 	-- TYPES
-	playerIdentifier: number,
+	playerIdentifier: Player,
 	playerName: string,
 }
 

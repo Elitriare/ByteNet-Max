@@ -21,6 +21,7 @@ local rateLimit = {
 local perPlayerReliable: { [Player]: types.channelData } = {}
 local perPlayerUnreliable: { [Player]: types.channelData } = {}
 local playerRateLimits: {} = {}
+local playerIdentities: {} = {} -- uint8 -> Player
 
 -- Shared with: src/process/client.luau, src/process/read.luau (Infeasible to split this into another file)
 local function create()
@@ -114,6 +115,15 @@ local function playerAdded(player)
 		perPlayerUnreliable[player] = create()
 	end
 	
+	local identity = 1
+	repeat identity = math.random(1, 255) until playerIdentities[identity] == nil -- make sure no two players have the same identity
+	playerIdentities[identity] = true
+	local clientRep = Instance.new("ObjectValue")
+	clientRep.Name = tostring(identity)
+	clientRep.Value = player
+	clientRep.Parent = script.Parent.Parent.playerIdentifier
+	playerIdentities[identity] = clientRep
+	
 	playerRateLimits[player] = {
 		lastTime = os.clock(),
 		currentBytes = MAX_BUFFER_SIZE -- the start limit, sorta like a bank of bytes. as player uses bytes, it deducts from this storage. but it refills at refillRate
@@ -135,6 +145,13 @@ local function playerRemoving(player: Player)
 	
 	if playerRateLimit ~= nil then
 		playerRateLimits[player] = nil
+	end
+	
+	for id, objvalue in playerIdentities do
+		if objvalue.Value == player then
+			playerIdentities[id] = nil
+			objvalue:Destroy()
+		end
 	end
 end
 

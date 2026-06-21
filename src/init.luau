@@ -21,6 +21,7 @@ local struct = require(script.dataTypes.struct)
 local uint16 = require(script.dataTypes.uint16)
 local uint32 = require(script.dataTypes.uint32)
 local uint8 = require(script.dataTypes.uint8)
+local playerIdentifier = require(script.dataTypes.playerIdentifier)
 local unknown = require(script.dataTypes.unknown)
 local vec2 = require(script.dataTypes.vec2)
 local vec3 = require(script.dataTypes.vec3)
@@ -70,7 +71,7 @@ local t = {
 
 	-- MASK TYPES
 	playerName = string(),
-	playerIdentifier = uint8(),
+	playerIdentifier = playerIdentifier(),
 }
 
 return (table.freeze(t) :: any) :: types.ByteNet
