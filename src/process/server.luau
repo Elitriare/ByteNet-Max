@@ -181,7 +181,7 @@ function serverProcess.sendPlayerUnreliable(
 	writer: (value: any) -> (),
 	data: { [string]: any }
 )
-	load(perPlayerUnreliable[player])
+	load(perPlayerUnreliable[player] or create())
 
 	alloc(1)
 	u8(id)
